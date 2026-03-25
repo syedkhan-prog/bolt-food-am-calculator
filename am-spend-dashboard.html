@@ -538,14 +538,12 @@
         <button onclick="loadLiveData()" style="padding:6px 12px;background:var(--accent-dim);color:var(--accent);border:1px solid rgba(52,211,153,.25);border-radius:6px;font-size:12px;cursor:pointer">Load Sheet</button>
       </div>
       <span id="sheetConfigStatus" style="font-size:11px;color:var(--text-dim);margin-top:4px;display:block"></span>
-      <p style="font-size:11px;color:var(--text-dim);margin-top:6px;max-width:720px">Sheet IDs in <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">data/sheet-config.json</code> are shared with every AM. To add a country: edit that file in GitHub with their Sheet ID + GID, then push.</p>
-      <div style="margin-top:8px">
-        <label style="font-size:11px;color:var(--text-dim)">Webhook URL — auto-update <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">sheet-config.json</code> on save (<a href="https://github.com/duncancalleja/bolt-food-campaign-calculator/blob/main/data/WEBHOOK_SETUP.md" target="_blank" rel="noopener" style="color:var(--accent)">5‑min Cloudflare setup</a>)</label>
-        <input type="text" id="sheetDispatchWebhook" placeholder="https://bolt-sheet-dispatch.xxx.workers.dev" style="width:100%;margin-top:4px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="saveSheetDispatchWebhook()">
-        <label style="font-size:11px;color:var(--text-dim);margin-top:6px;display:block">Webhook shared secret (optional — same value as Worker <code>WEBHOOK_SECRET</code>)</label>
-        <input type="password" id="sheetWebhookSecret" placeholder="Leave empty if Worker has no secret" autocomplete="off" style="width:100%;margin-top:4px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px" onchange="saveSheetWebhookSecret()">
+      <p id="sheetHelpMt" style="font-size:11px;color:var(--text-dim);margin-top:6px;max-width:720px;display:none"><strong>Malta</strong> uses the shared OPS sheet from <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">data/sheet-config.json</code> on GitHub. It updates for everyone when the site is deployed — no per-browser sheet settings.</p>
+      <p id="sheetHelpOther" style="font-size:11px;color:var(--text-dim);margin-top:6px;max-width:720px;display:none">Other countries: Sheet ID and GID are <strong>saved only in this browser</strong>. Use <strong>Import sheet JSON</strong> if you have a small file <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">{"sheetId":"…","gid":"…"}</code> — nothing is sent to GitHub.</p>
+      <div id="sheetLocalToolsWrap" style="margin-top:8px;display:none">
+        <input type="file" id="sheetConfigFileImport" accept="application/json,.json" style="display:none" onchange="importSheetFromJsonFile(this)">
+        <button type="button" onclick="document.getElementById('sheetConfigFileImport').click()" style="padding:6px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;font-size:12px;cursor:pointer">Import sheet JSON</button>
       </div>
-      <div id="sheetGhCommandWrap" style="display:none;margin-top:8px;padding:8px;background:var(--surface2);border-radius:6px;font-size:11px;font-family:monospace;word-break:break-all;color:var(--text-dim)"></div>
     </div>
     <div id="calibrationPanel" style="display:none"></div>
     <div class="sp-history" id="snapshotHistory"></div>
@@ -608,12 +606,14 @@ async function _switchCountry(cc) {
     else document.getElementById('boltBudget').value = '';
 
     if (statusEl) { statusEl.textContent = cc.toUpperCase(); statusEl.style.background = 'var(--accent-dim)'; statusEl.style.color = 'var(--accent)'; }
+    _updateSheetUrl();
     loadLiveData();
     try { renderSnapshots(); } catch(e) { console.warn('renderSnapshots:', e); }
     try { showActiveCalibration(); } catch(e) { console.warn('showActiveCalibration:', e); }
   } catch(e) {
     console.warn('Failed to load ' + cc + ' data:', e);
     if (statusEl) { statusEl.textContent = 'Error'; statusEl.style.background = 'var(--danger-dim)'; statusEl.style.color = 'var(--danger)'; }
+    _updateSheetUrl();
   }
 }
 
@@ -632,12 +632,14 @@ async function _loadSheetConfigAndTeamSnapshots() {
 }
 
 function _sheetIdForCountry(cc) {
+  if (cc === 'mt') {
+    const sh = _SHEET_CONFIG[cc];
+    const fromShared = sh && sh.sheetId && String(sh.sheetId).trim();
+    if (fromShared) return { id: fromShared.trim(), gid: (sh.gid || '0').toString().trim() || '0' };
+    return { id: '17Wffy6BSp2pGr_AMy45EPG4LO3AlU5dFBJQOHjVKWWg', gid: '559236247' };
+  }
   const loc = (localStorage.getItem('bolt_sheet_id_' + cc) || '').trim();
   if (loc) return { id: loc, gid: (localStorage.getItem('bolt_sheet_gid_' + cc) || '0').trim() };
-  const sh = _SHEET_CONFIG[cc];
-  const fromShared = sh && sh.sheetId && String(sh.sheetId).trim();
-  if (fromShared) return { id: fromShared.trim(), gid: (sh.gid || '0').toString().trim() || '0' };
-  if (cc === 'mt') return { id: '17Wffy6BSp2pGr_AMy45EPG4LO3AlU5dFBJQOHjVKWWg', gid: '559236247' };
   return { id: '', gid: '' };
 }
 
@@ -2844,7 +2846,6 @@ function loadSheetUrl() {
   const url = getSheetUrl();
   if (url) { document.getElementById('sheetWebhookUrl').value = url; saveSheetUrl(); }
   _updateSheetUrl();
-  loadSheetDispatchWebhook();
 }
 
 async function pushSnapshotToSheet(snap) {
@@ -7553,9 +7554,9 @@ let _PROVIDER_LOOKUP = {
 };
 
 
-let SHEET_ID = localStorage.getItem('bolt_sheet_id_' + _CURRENT_COUNTRY) || '17Wffy6BSp2pGr_AMy45EPG4LO3AlU5dFBJQOHjVKWWg';
-let SHEET_GID = localStorage.getItem('bolt_sheet_gid_' + _CURRENT_COUNTRY) || '559236247';
-let SHEET_JSONP_URL = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=responseHandler:_handleSheetJsonp&gid=' + SHEET_GID;
+let SHEET_ID = _CURRENT_COUNTRY === 'mt' ? '17Wffy6BSp2pGr_AMy45EPG4LO3AlU5dFBJQOHjVKWWg' : '';
+let SHEET_GID = _CURRENT_COUNTRY === 'mt' ? '559236247' : '0';
+let SHEET_JSONP_URL = SHEET_ID ? ('https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=responseHandler:_handleSheetJsonp&gid=' + SHEET_GID) : '';
 
 function _updateSheetUrl() {
   const sg = _sheetIdForCountry(_CURRENT_COUNTRY);
@@ -7570,63 +7571,68 @@ function _updateSheetUrl() {
   const gidEl = document.getElementById('sheetGidInput');
   if (idEl) idEl.value = SHEET_ID;
   if (gidEl) gidEl.value = SHEET_GID;
+  const isMt = _CURRENT_COUNTRY === 'mt';
+  if (idEl) {
+    idEl.readOnly = isMt;
+    idEl.title = isMt ? 'Malta sheet is managed in data/sheet-config.json (repo)' : '';
+  }
+  if (gidEl) {
+    gidEl.readOnly = isMt;
+    gidEl.title = isMt ? 'Malta sheet is managed in data/sheet-config.json (repo)' : '';
+  }
+  const helpMt = document.getElementById('sheetHelpMt');
+  const helpOther = document.getElementById('sheetHelpOther');
+  const localWrap = document.getElementById('sheetLocalToolsWrap');
+  if (helpMt) helpMt.style.display = isMt ? 'block' : 'none';
+  if (helpOther) helpOther.style.display = isMt ? 'none' : 'block';
+  if (localWrap) localWrap.style.display = isMt ? 'none' : 'block';
+
   const st = document.getElementById('sheetConfigStatus');
-  if (st && _SHEET_CONFIG[_CURRENT_COUNTRY] && _SHEET_CONFIG[_CURRENT_COUNTRY].sheetId) {
-    st.textContent = 'Using shared sheet (sheet-config.json) for ' + _CURRENT_COUNTRY.toUpperCase();
+  if (st) {
+    if (isMt) {
+      st.textContent = 'Malta: shared OPS sheet from the repository (updates when the site deploys).';
+    } else {
+      const sid = (localStorage.getItem('bolt_sheet_id_' + _CURRENT_COUNTRY) || '').trim();
+      st.textContent = sid
+        ? 'Saved in this browser only for ' + _CURRENT_COUNTRY.toUpperCase() + ' — not on GitHub.'
+        : 'Enter Sheet ID + GID or import JSON — stored only in this browser.';
+    }
   }
 }
 
-function _ghDispatchCommand(country, sheetId, gid) {
-  const repo = 'duncancalleja/bolt-food-campaign-calculator';
-  return `gh api --method POST repos/${repo}/dispatches -f event_type=update_sheet_config -f 'client_payload[country]=${country}' -f 'client_payload[sheetId]=${sheetId}' -f 'client_payload[gid]=${gid || '0'}'`;
-}
-
-function saveSheetDispatchWebhook() {
-  const el = document.getElementById('sheetDispatchWebhook');
-  if (el) localStorage.setItem('bolt_sheet_dispatch_webhook', (el.value || '').trim());
-}
-
-function loadSheetDispatchWebhook() {
-  const el = document.getElementById('sheetDispatchWebhook');
-  const v = localStorage.getItem('bolt_sheet_dispatch_webhook') || '';
-  if (el) el.value = v;
-  const se = document.getElementById('sheetWebhookSecret');
-  const sv = localStorage.getItem('bolt_sheet_webhook_secret') || '';
-  if (se) se.value = sv;
-}
-
-function saveSheetWebhookSecret() {
-  const el = document.getElementById('sheetWebhookSecret');
-  if (el) localStorage.setItem('bolt_sheet_webhook_secret', (el.value || '').trim());
+function importSheetFromJsonFile(input) {
+  if (_CURRENT_COUNTRY === 'mt') return;
+  const f = input.files && input.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const obj = JSON.parse(reader.result);
+      const sid = (obj.sheetId || obj.id || '').toString().trim();
+      const gid = (obj.gid || '0').toString().trim();
+      if (sid) {
+        document.getElementById('sheetIdInput').value = sid;
+        document.getElementById('sheetGidInput').value = gid;
+        _saveSheetConfig();
+      }
+    } catch (e) {
+      console.warn('importSheetFromJsonFile', e);
+    }
+    input.value = '';
+  };
+  reader.readAsText(f);
 }
 
 function _saveSheetConfig() {
+  if (_CURRENT_COUNTRY === 'mt') {
+    _updateSheetUrl();
+    return;
+  }
   const sid = (document.getElementById('sheetIdInput').value || '').trim();
   const gid = (document.getElementById('sheetGidInput').value || '').trim();
   localStorage.setItem('bolt_sheet_id_' + _CURRENT_COUNTRY, sid);
   localStorage.setItem('bolt_sheet_gid_' + _CURRENT_COUNTRY, gid);
   _updateSheetUrl();
-  const st = document.getElementById('sheetConfigStatus');
-  if (st) st.textContent = sid ? 'Saved locally for ' + _CURRENT_COUNTRY.toUpperCase() + ' (overrides shared sheet-config until cleared)' : '';
-
-  const ghWrap = document.getElementById('sheetGhCommandWrap');
-  if (ghWrap && sid) {
-    ghWrap.style.display = 'block';
-    ghWrap.innerHTML = '<div style="margin-bottom:4px;color:var(--text)">To commit to GitHub for <strong>all AMs</strong>, run locally (after <code>gh auth login</code>):</div><code style="color:var(--accent)">' +
-      _ghDispatchCommand(_CURRENT_COUNTRY, sid, gid).replace(/</g, '&lt;') + '</code>';
-  } else if (ghWrap) ghWrap.style.display = 'none';
-
-  const wh = localStorage.getItem('bolt_sheet_dispatch_webhook');
-  if (wh && sid) {
-    const payload = { country: _CURRENT_COUNTRY, sheetId: sid, gid: gid || '0' };
-    const sec = (localStorage.getItem('bolt_sheet_webhook_secret') || '').trim();
-    if (sec) payload.secret = sec;
-    fetch(wh, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).catch(() => {});
-  }
 }
 
 const _BRAND_GROUP = {

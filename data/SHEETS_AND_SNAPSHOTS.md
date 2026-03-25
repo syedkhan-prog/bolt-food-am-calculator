@@ -1,70 +1,43 @@
 # Shared sheets & team snapshots
 
-## `sheet-config.json`
+## Malta (`mt`) — shared OPS sheet (repository)
 
-- Lists the **Traitless OPS Google Sheet** (Sheet ID + GID tab) per country.
-- **All AMs** see the same sheet when they select that country (unless they set a local override in the dashboard inputs).
-- **To add a country:** edit `sheet-config.json` on GitHub, add `"sheetId"` and `"gid"`, commit and push.
+- **`data/sheet-config.json`** holds the **Malta** Traitless OPS Google Sheet (`sheetId` + `gid`).
+- When this file is updated on GitHub and the site is deployed, **every AM** sees the same Malta sheet automatically.
+- On the dashboard, Malta’s Sheet ID / GID fields are **read-only** (they mirror the repo).
+
+## Other countries — this browser only
+
+- Sheet ID and GID are **not** read from `sheet-config.json` for countries other than Malta.
+- Each AM enters values (or uses **Import sheet JSON** with `{"sheetId":"…","gid":"…"}`). Data is stored in **`localStorage` on that device only** — nothing is pushed to GitHub from the dashboard.
+- Optional: keep a small JSON file on your machine and re-import when you change browsers or machines.
 
 ## `team-snapshots.json`
 
 - Optional **shared snapshot history** for calibration / learning.
-- Structure: `{ "byCountry": { "mt": [ {...}, ... ], "pl": [...] } }`
-- **Export:** any AM can click **Export all countries** on the dashboard after Sunday runs (or anytime), then merge the downloaded `byCountry` into `team-snapshots.json` and push so everyone loads the same history.
+- **Export all countries** on the dashboard downloads local snapshot data; you can merge into `team-snapshots.json` and push for team-wide history.
 
 ## Scheduled weekly snapshots (GitHub Actions)
 
-You **do not** need to open the dashboard on Sunday. Workflow **Weekly team snapshots** runs on a cron (default: Sunday 08:00 UTC), uses Playwright to load `am-spend-dashboard.html` locally, calls the same multi-country snapshot logic as the in-app Sunday run, then merges results into `data/team-snapshots.json` and pushes.
+- Workflow **Weekly team snapshots** (Sunday 08:00 UTC, or run manually) collects snapshots for countries that have a sheet available in that environment.
+- **In CI**, only **Malta** is driven from `sheet-config.json` (no per-country `localStorage`). Other countries are snapshot only when an AM runs the dashboard locally with sheet IDs saved in the browser, or via Sunday in-browser runs.
 
-- Workflow file: `.github/workflows/weekly-snapshots.yml`
-- Scripts: `scripts/ci_weekly_snapshots.mjs`, `scripts/merge_team_snapshots.py`
-- Manual run: **Actions → Weekly team snapshots → Run workflow**
+## Sunday auto-snapshots (browser)
 
-## Sunday auto-snapshots (browser only)
-
-- If someone opens the **Spend dashboard on a Sunday**, the app can still snapshot **every country** that has a sheet configured (shared config or local override).
-- Each country’s snapshots are stored in the browser under `am_spend_snapshots_<cc>`.
-- Use **Export all countries** + merge into `team-snapshots.json` to share history, or rely on the **scheduled Actions** job above.
+- If someone opens the **Spend dashboard on a Sunday**, the app snapshots countries that have a configured sheet (Malta from repo; others from local storage).
+- Snapshots live under `am_spend_snapshots_<cc>` in the browser.
 
 ---
 
-## Pushing sheet changes from the dashboard → GitHub
+## Optional: change Malta’s sheet via GitHub (admins)
 
-A static HTML app **cannot** hold a GitHub token safely. Options:
-
-### A) `repository_dispatch` (recommended)
-
-1. Create a **classic PAT** (or fine-grained token) with **`repo`** scope for `duncancalleja/bolt-food-campaign-calculator`.
-2. After you enter Sheet ID + GID on the dashboard, run (replace values):
-
-```bash
-gh auth login   # once, or export GH_TOKEN
-
-gh api --method POST repos/duncancalleja/bolt-food-campaign-calculator/dispatches \
-  -f event_type=update_sheet_config \
-  -f client_payload[country]=pl \
-  -f client_payload[sheetId]=YOUR_SPREADSHEET_ID \
-  -f client_payload[gid]=0
-```
-
-3. The workflow **Update sheet config (repository_dispatch)** updates `data/sheet-config.json` and pushes.
-
-The dashboard shows a copy-paste **GitHub dispatch** command with your current country and fields filled where possible.
-
-### B) Webhook (automatic from the browser — recommended)
-
-Follow **[WEBHOOK_SETUP.md](./WEBHOOK_SETUP.md)** (Cloudflare Worker, ~5 minutes). After deploy, paste the Worker URL (and optional shared secret) into the dashboard; each save of Sheet ID + GID **POST**s `{ country, sheetId, gid, secret? }` and GitHub Actions updates `sheet-config.json`.
-
----
+Edit **`data/sheet-config.json`** for the `mt` entry and push, or use **`repository_dispatch`** / the **`workers/`** Cloudflare pattern if your org already deployed that — not required for normal AM use.
 
 ## Files reference
 
 | File | Role |
 |------|------|
-| `data/sheet-config.json` | Shared Sheet ID + GID per country |
-| `data/team-snapshots.json` | Shared snapshot history |
-| `.github/workflows/weekly-snapshots.yml` | Cron + Playwright snapshot collector |
-| `.github/workflows/update-sheet-config.yml` | Applies `update_sheet_config` dispatch |
-| `scripts/ci_weekly_snapshots.mjs` | Playwright: collect snapshots JSON |
-| `scripts/merge_team_snapshots.py` | Merge CI output into `team-snapshots.json` |
-| `scripts/apply_sheet_dispatch.py` | Apply dispatch payload to `sheet-config.json` |
+| `data/sheet-config.json` | **Malta** shared OPS sheet (repo); other keys may exist as placeholders |
+| `data/team-snapshots.json` | Optional shared snapshot history |
+| `.github/workflows/weekly-snapshots.yml` | Scheduled snapshot collector |
+| `scripts/ci_weekly_snapshots.mjs`, `scripts/merge_team_snapshots.py` | CI helpers |
