@@ -24,6 +24,8 @@ import pandas as pd
 
 DATA_DIR = os.path.join(ROOT, 'data')
 TODAY = date.today().isoformat()
+# Weekly baseline for provider orders/GMV averages (most recent N weeks, GMV > 0 only).
+RECENT_WEEKS_FOR_AVG = 8
 
 COUNTRY_NAMES = {
     'az': 'Azerbaijan', 'bg': 'Bulgaria', 'cy': 'Cyprus', 'cz': 'Czechia',
@@ -55,17 +57,48 @@ def pull_providers(dbx, cc):
     """)
 
 
-def pull_order_stats(dbx, cc):
+def pull_order_stats(dbx, cc, recent_weeks=RECENT_WEEKS_FOR_AVG):
     return dbx.query(f"""
+        WITH provider_weeks AS (
+            SELECT
+                provider_id,
+                DATE_TRUNC('WEEK', order_created_date) AS week_start,
+                COUNT(order_id) AS week_orders,
+                SUM(COALESCE(gmv_eur, 0)) AS week_gmv
+            FROM ng_public_spark.etl_delivery_order_monetary_metrics
+            WHERE country = '{cc}'
+              AND order_created_date >= DATE_FORMAT(DATE_SUB(CURRENT_DATE(), 365), 'yyyy-MM-dd')
+              AND is_bolt_market = false
+            GROUP BY provider_id, DATE_TRUNC('WEEK', order_created_date)
+        ),
+        ranked AS (
+            SELECT
+                provider_id,
+                week_start,
+                week_orders,
+                week_gmv,
+                ROW_NUMBER() OVER (
+                    PARTITION BY provider_id
+                    ORDER BY week_start DESC
+                ) AS week_rank
+            FROM provider_weeks
+        ),
+        recent AS (
+            SELECT provider_id, week_orders, week_gmv
+            FROM ranked
+            WHERE week_rank <= {recent_weeks}
+              AND week_gmv > 0
+        )
         SELECT
             provider_id,
-            COUNT(order_id) AS total_orders,
-            ROUND(SUM(gmv_eur), 2) AS total_gmv,
-            ROUND(AVG(gmv_eur), 2) AS avg_aov
-        FROM ng_public_spark.etl_delivery_order_monetary_metrics
-        WHERE country = '{cc}'
-          AND order_created_date >= DATE_FORMAT(DATE_SUB(CURRENT_DATE(), 365), 'yyyy-MM-dd')
-          AND is_bolt_market = false
+            SUM(week_orders) AS total_orders,
+            ROUND(SUM(week_gmv), 2) AS total_gmv,
+            ROUND(
+                CASE WHEN SUM(week_orders) > 0 THEN SUM(week_gmv) / SUM(week_orders) ELSE 0 END,
+                2
+            ) AS avg_aov,
+            COUNT(*) AS active_weeks
+        FROM recent
         GROUP BY provider_id
     """)
 
@@ -183,7 +216,7 @@ def _extract_cost_share(name):
 def build_calc_data(providers, orders, camp_spend):
     merged = providers.merge(orders, on='provider_id', how='left')
     merged = merged.merge(camp_spend, on='provider_id', how='left')
-    for col in ['bolt_spend', 'provider_spend', 'total_gmv', 'avg_aov']:
+    for col in ['bolt_spend', 'provider_spend', 'total_gmv', 'avg_aov', 'active_weeks']:
         merged[col] = merged[col].fillna(0)
     merged['total_orders'] = merged['total_orders'].fillna(0).astype(int)
     merged['seg_code'] = merged['business_segment_v2'].apply(seg_code)
@@ -204,7 +237,8 @@ def build_calc_data(providers, orders, camp_spend):
             round(float(r['avg_aov']), 2), comm,
             int(round(float(r['bolt_spend']), 0)),
             int(round(float(r['provider_spend']), 0)),
-            vid, vname, gname
+            vid, vname, gname,
+            int(r['active_weeks']) if pd.notna(r['active_weeks']) else 0
         ])
     return rows
 
@@ -227,6 +261,7 @@ def build_provider_lookup(providers, orders):
     merged['total_orders'] = merged['total_orders'].fillna(0).astype(int)
     merged['total_gmv'] = merged['total_gmv'].fillna(0)
     merged['avg_aov'] = merged['avg_aov'].fillna(0)
+    merged['active_weeks'] = merged['active_weeks'].fillna(0)
 
     lookup = {}
     for _, r in merged.iterrows():
@@ -234,7 +269,8 @@ def build_provider_lookup(providers, orders):
         am = str(r['account_manager_name']) if pd.notna(r['account_manager_name']) else 'Unknown'
         seg = str(r['business_segment_v2']) if pd.notna(r['business_segment_v2']) else 'SMB'
         lookup[pid] = [am, int(r['total_orders']), round(float(r['total_gmv']), 2),
-                       round(float(r['avg_aov']), 2), seg]
+                       round(float(r['avg_aov']), 2), seg,
+                       int(r['active_weeks']) if pd.notna(r['active_weeks']) else 0]
     return lookup
 
 
@@ -313,7 +349,7 @@ def process_country(dbx, cc):
         'country': cc,
         'country_name': COUNTRY_NAMES.get(cc, cc),
         'refreshed': TODAY,
-        'weeks': 52,
+        'weeks': RECENT_WEEKS_FOR_AVG,
         'embedded_data': calc_data,
     }
 
@@ -321,7 +357,7 @@ def process_country(dbx, cc):
         'country': cc,
         'country_name': COUNTRY_NAMES.get(cc, cc),
         'refreshed': TODAY,
-        'weeks_in_data': 52,
+        'weeks_in_data': RECENT_WEEKS_FOR_AVG,
         'camp_history': camp_history,
         'dbx_actuals': actuals_data,
         'provider_lookup': lookup_data,

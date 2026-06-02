@@ -289,7 +289,7 @@
   </select>
   <span id="dataRefreshBadge" style="font-size:11px;color:#8b949e;background:rgba(255,255,255,0.06);padding:3px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:6px">
     <span id="dataStatusDot" style="width:7px;height:7px;border-radius:50%;background:#3fb950;display:inline-block"></span>
-    Data: <span id="refreshDate">—</span> · 12 months
+    Data: <span id="refreshDate">—</span> · last 8 wks (GMV &gt; 0)
   </span>
   <a href="am-spend-dashboard.html" style="margin-left:auto;font-size:13px;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:4px">AM Spend Dashboard →</a>
 </div>
@@ -623,6 +623,46 @@ const SEGMENT_BENCHMARKS = {
   stores:     { avgOrders: 220, avgAOV: 46.0 }
 };
 
+// Weekly baseline: most recent N calendar weeks with GMV > 0 (matches refresh_data.py).
+const RECENT_WEEKS_FOR_AVG = 8;
+
+function weekSortKey(week) {
+  if (!week) return '';
+  const s = String(week).trim();
+  const iso = s.match(/^(\d{4})-W(\d{1,2})$/i);
+  if (iso) return iso[1] + '-W' + String(iso[2]).padStart(2, '0');
+  const d = Date.parse(s);
+  if (!isNaN(d)) return new Date(d).toISOString().slice(0, 10);
+  return s;
+}
+
+function providerWeeksForAvg(weeks, maxWeeks) {
+  maxWeeks = maxWeeks || RECENT_WEEKS_FOR_AVG;
+  const sorted = (weeks || []).slice().sort((a, b) => weekSortKey(b.week).localeCompare(weekSortKey(a.week)));
+  const recent = sorted.slice(0, maxWeeks);
+  return recent.filter(w => !isNaN(w.orders) && w.orders > 0 && !isNaN(w.gmv) && w.gmv > 0);
+}
+
+function applyProviderWeeklyAvgs(p, maxWeeks) {
+  const valid = providerWeeksForAvg(p.weeks, maxWeeks);
+  if (valid.length > 0) {
+    p.avgOrders = valid.reduce((s, w) => s + w.orders, 0) / valid.length;
+    p.avgGMV = valid.reduce((s, w) => s + (w.gmv || 0), 0) / valid.length;
+    p.avgAOV = p.avgGMV > 0 && p.avgOrders > 0 ? p.avgGMV / p.avgOrders : 0;
+    p.activeWeeks = valid.length;
+    const aovVals = valid.filter(w => !isNaN(w.aov) && w.aov > 0).map(w => w.aov);
+    if (aovVals.length >= 3 && p.avgAOV > 0) {
+      const weeklyCV = Math.sqrt(aovVals.reduce((s, v) => s + Math.pow(v - p.avgAOV, 2), 0) / aovVals.length) / p.avgAOV;
+      p.estimatedCV = Math.max(0.25, Math.min(0.7, weeklyCV * 1.8));
+    } else {
+      p.estimatedCV = ORDER_VALUE_CV;
+    }
+  } else {
+    p.avgOrders = 0; p.avgGMV = 0; p.avgAOV = 0; p.estimatedCV = ORDER_VALUE_CV;
+    p.activeWeeks = 0;
+  }
+}
+
 // ─── Country switching & data loading ───
 let _CURRENT_COUNTRY = localStorage.getItem('bolt_country') || 'mt';
 const _COUNTRIES = {};
@@ -673,6 +713,8 @@ async function _switchCountry(cc) {
     console.warn(`Failed to load ${cc} data:`, e);
     if (dot) dot.style.background = '#ef4444';
     if (status) status.textContent = `Failed to load ${cc.toUpperCase()} data`;
+    const rd = document.getElementById('refreshDate');
+    if (rd) rd.textContent = 'not loaded';
   }
 }
 
@@ -2497,7 +2539,7 @@ let _EMBEDDED_DATA = [
 ['Grab A Crab',190185,'S',0,0.0,0.0,23.5,0,0,141769,'GRAB A CRAB Valletta']
 ];
 let _EMBEDDED_WEEKS = 52;
-let _DATA_REFRESHED = '2026-03-16';
+let _DATA_REFRESHED = '';
 
 let vendorDB = {};
 let groupDB = {};
@@ -2512,21 +2554,25 @@ function loadEmbeddedData() {
   groupDB = {};
 
   _EMBEDDED_DATA.forEach(d => {
-    // [name, pid, seg, orders, gmv, aov, comm, campBolt, campMerch, vid, vname, gname]
+    // [name, pid, seg, orders, gmv, aov, comm, campBolt, campMerch, vid, vname, gname, activeWeeks?]
     const name = d[0], id = d[1], seg = segMap[d[2]] || 'smb';
     const totalOrders = d[3], totalGmv = d[4], aov = d[5];
     const comm = d[6], campBolt = d[7], campMerch = d[8];
     const vid = d[9], vname = d[10] || '', gname = d[11] || '';
+    const activeWeeksRaw = Number(d[12] || 0);
+    const activeWeeks = (isFinite(activeWeeksRaw) && activeWeeksRaw > 0)
+      ? Math.min(RECENT_WEEKS_FOR_AVG, Math.max(1, Math.round(activeWeeksRaw)))
+      : RECENT_WEEKS_FOR_AVG;
 
-    const avgOrders = Math.round(totalOrders / nWeeks);
-    const avgGmv = Math.round(totalGmv / nWeeks);
+    const avgOrders = Math.round(totalOrders / activeWeeks);
+    const avgGmv = Math.round(totalGmv / activeWeeks);
 
     providerDB[name] = {
       weeks: [], segment: seg, campaigns: [], name: name,
       providerId: id, vendorId: vid, vendorName: vname, groupName: gname,
       avgOrders: avgOrders, avgGMV: avgGmv, avgAOV: aov,
       commission: comm, campBolt: campBolt, campMerch: campMerch,
-      totalOrders: totalOrders, totalGMV: totalGmv
+      totalOrders: totalOrders, totalGMV: totalGmv, activeWeeks: activeWeeks
     };
 
     // Build vendor DB by aggregating providers
@@ -2707,25 +2753,8 @@ function parseWideFormat(text) {
     });
   }
 
-  // Compute averages + order-value CV from weekly variance
-  Object.keys(providerDB).forEach(pid => {
-    const p = providerDB[pid];
-    const valid = p.weeks.filter(w => !isNaN(w.orders) && w.orders > 0);
-    if (valid.length > 0) {
-      p.avgOrders = valid.reduce((s, w) => s + w.orders, 0) / valid.length;
-      p.avgGMV = valid.reduce((s, w) => s + (w.gmv || 0), 0) / valid.length;
-      p.avgAOV = p.avgGMV > 0 && p.avgOrders > 0 ? p.avgGMV / p.avgOrders : 0;
-      const aovVals = valid.filter(w => !isNaN(w.aov) && w.aov > 0).map(w => w.aov);
-      if (aovVals.length >= 3 && p.avgAOV > 0) {
-        const weeklyCV = Math.sqrt(aovVals.reduce((s, v) => s + Math.pow(v - p.avgAOV, 2), 0) / aovVals.length) / p.avgAOV;
-        p.estimatedCV = Math.max(0.25, Math.min(0.7, weeklyCV * 1.8));
-      } else {
-        p.estimatedCV = ORDER_VALUE_CV;
-      }
-    } else {
-      p.avgOrders = 0; p.avgGMV = 0; p.avgAOV = 0; p.estimatedCV = ORDER_VALUE_CV;
-    }
-  });
+  // Compute averages from most recent weeks with GMV > 0
+  Object.keys(providerDB).forEach(pid => applyProviderWeeklyAvgs(providerDB[pid]));
 
   dataLoaded = true;
   const count = Object.keys(providerDB).length;
@@ -2863,29 +2892,13 @@ function reBuildDB() {
     providerDB[pid].weeks.push(entry);
   });
 
-  Object.keys(providerDB).forEach(pid => {
-    const p = providerDB[pid];
-    const valid = p.weeks.filter(w => !isNaN(w.orders) && w.orders > 0);
-    if (valid.length > 0) {
-      p.avgOrders = valid.reduce((s, w) => s + w.orders, 0) / valid.length;
-      p.avgGMV = valid.reduce((s, w) => s + (w.gmv || 0), 0) / valid.length;
-      p.avgAOV = p.avgGMV > 0 && p.avgOrders > 0 ? p.avgGMV / p.avgOrders : 0;
-      const aovVals = valid.filter(w => !isNaN(w.aov) && w.aov > 0).map(w => w.aov);
-      if (aovVals.length >= 3 && p.avgAOV > 0) {
-        const weeklyCV = Math.sqrt(aovVals.reduce((s, v) => s + Math.pow(v - p.avgAOV, 2), 0) / aovVals.length) / p.avgAOV;
-        p.estimatedCV = Math.max(0.25, Math.min(0.7, weeklyCV * 1.8));
-      } else {
-        p.estimatedCV = ORDER_VALUE_CV;
-      }
-    } else {
-      p.avgOrders = 0; p.avgGMV = 0; p.avgAOV = 0; p.estimatedCV = ORDER_VALUE_CV;
-    }
-  });
+  Object.keys(providerDB).forEach(pid => applyProviderWeeklyAvgs(providerDB[pid]));
 
   dataLoaded = true;
   const count = Object.keys(providerDB).length;
   document.getElementById('uploadStatus').innerHTML =
-    `<span class="count">${count}</span> providers loaded.`;
+    `<span class="count">${count}</span> providers loaded ` +
+    `(avg from last ${RECENT_WEEKS_FOR_AVG} weeks with GMV &gt; 0).`;
   switchToUploadedMode();
 }
 
@@ -3374,7 +3387,7 @@ function calculate() {
   document.getElementById('infoBanner').innerHTML =
     `${srcTag} <strong>${tl}</strong> for <strong>${weeks} week${weeks>1?'s':''}</strong>, ` +
     `<strong>${sl}</strong>${movTag}. Provider does ~<strong>${orders} orders/wk</strong> at <strong>€${aov} AOV</strong>` +
-    `${currentSource === 'uploaded' ? ' (from uploaded data)' : ''}.`;
+    `${currentSource === 'uploaded' ? ` (avg: last ${RECENT_WEEKS_FOR_AVG} weeks with GMV &gt; 0)` : ''}.`;
 
   document.getElementById('providerCostWeek').textContent = fmt(pw);
   document.getElementById('providerCostSub').textContent = pw > 0 ? `${fmt(pt)} total (${weeks}w) · ${pct(pw / r.gmv)} of provider weekly GMV` : 'No provider cost';
