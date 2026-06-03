@@ -386,8 +386,15 @@ def generate_country_index():
     for cc, name in sorted(COUNTRY_NAMES.items()):
         calc_path = os.path.join(DATA_DIR, f'{cc}-calc.json')
         dash_path = os.path.join(DATA_DIR, f'{cc}-dash.json')
-        if os.path.exists(calc_path) and os.path.exists(dash_path):
-            index[cc] = {'name': name, 'refreshed': TODAY}
+        if not (os.path.exists(calc_path) and os.path.exists(dash_path)):
+            continue
+        refreshed = TODAY
+        try:
+            with open(calc_path) as f:
+                refreshed = json.load(f).get('refreshed') or refreshed
+        except (OSError, json.JSONDecodeError):
+            pass
+        index[cc] = {'name': name, 'refreshed': refreshed}
 
     with open(os.path.join(DATA_DIR, 'countries.json'), 'w') as f:
         json.dump(index, f, indent=2)
