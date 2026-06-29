@@ -1,0 +1,223 @@
+{
+  "country": "ro",
+  "country_name": "Romania",
+  "month": "2026-06",
+  "as_of": "2026-06-28",
+  "refreshed": "2026-06-28T10:24:21Z",
+  "gmv_target": 32125745.0,
+  "gmv_mtd": 25707250.16,
+  "gmv_run_rate_eom": 27543482.31,
+  "gmv_pace_pct": 0.8574,
+  "elapsed_days": 28,
+  "days_in_month": 30,
+  "days_left": 3,
+  "weeks_left": 0.43,
+  "di_pct": {
+    "new_city": 0.0029,
+    "elc": 0.0008,
+    "churn_untested": 0.0,
+    "am_food": 0.0115,
+    "marketing_food": 0.0024,
+    "bdm_3p": 0.0029,
+    "store_1p": 0.0023,
+    "untested_total": 0.0229,
+    "bolt_plus": 0.019,
+    "activation": 0.025,
+    "churned": 0.0092,
+    "occasional": 0.0644,
+    "total_bolt": 0.1405,
+    "total_campaign": 0.273
+  },
+  "am_di_pct": 0.0139,
+  "budget_eur": {
+    "total_bolt_monthly": 4513667.17,
+    "total_bolt_rr_paced": 3869859.27,
+    "am_monthly": 446547.86,
+    "am_rr_paced": 382854.4,
+    "remaining_total_bolt": 229395.98,
+    "remaining_am": -41907.32,
+    "weekly_am_envelope": -97783.74,
+    "daily_am_envelope": -13969.11
+  },
+  "mtd_actual": {
+    "bolt_spend": 3640463.29,
+    "am_spend": 424761.72,
+    "by_objective": {
+      "liquidity": {
+        "bolt": 647705.36,
+        "provider": 0.0
+      },
+      "reactivation": {
+        "bolt": 149848.53,
+        "provider": 95122.62
+      },
+      "provider_campaign_locations": {
+        "bolt": 0.0,
+        "provider": 51208.42
+      },
+      "marketing": {
+        "bolt": 1887.38,
+        "provider": 0.0
+      },
+      "other": {
+        "bolt": 853.87,
+        "provider": 0.0
+      },
+      "new_city_launch": {
+        "bolt": 22623.93,
+        "provider": 0.0
+      },
+      "engagement": {
+        "bolt": 714904.03,
+        "provider": 780359.37
+      },
+      "bolt_plus_campaign": {
+        "bolt": 396604.48,
+        "provider": 5834.89
+      },
+      "provider_campaign_ELC_merchant": {
+        "bolt": 26528.13,
+        "provider": 0.0
+      },
+      "provider_campaign_manual_churn_prevention": {
+        "bolt": 202994.21,
+        "provider": 130991.33
+      },
+      "sp_reactivation": {
+        "bolt": 228895.06,
+        "provider": 229799.08
+      },
+      "sp_engagement": {
+        "bolt": 213163.32,
+        "provider": 428289.84
+      },
+      "provider_campaign_marketing_3rd_party_partnership": {
+        "bolt": 8472.86,
+        "provider": 0.0
+      },
+      "provider_campaign_marketing": {
+        "bolt": 89696.21,
+        "provider": 1181190.38
+      },
+      "activation": {
+        "bolt": 752829.6,
+        "provider": 1064.52
+      },
+      "experiment": {
+        "bolt": 381.65,
+        "provider": 0.0
+      },
+      "sp_activation": {
+        "bolt": 50180.56,
+        "provider": 38007.34
+      },
+      "marketing_3rd_party_partnership": {
+        "bolt": 2687.32,
+        "provider": 0.0
+      },
+      "provider_campaign_portal": {
+        "bolt": 22.87,
+        "provider": 406869.85
+      },
+      "provider_campaign_sales_benefit": {
+        "bolt": 130183.92,
+        "provider": 109856.06
+      }
+    },
+    "by_bucket": {
+      "marketplace": {
+        "bolt": 647705.36,
+        "provider": 0.0
+      },
+      "churned": {
+        "bolt": 378743.59,
+        "provider": 324921.7
+      },
+      "marketing_food": {
+        "bolt": 91583.59,
+        "provider": 1181190.38
+      },
+      "new_city": {
+        "bolt": 22623.93,
+        "provider": 0.0
+      },
+      "occasional": {
+        "bolt": 928067.35,
+        "provider": 1208649.21
+      },
+      "bolt_plus": {
+        "bolt": 396604.48,
+        "provider": 5834.89
+      },
+      "bdm_3p": {
+        "bolt": 26528.13,
+        "provider": 0.0
+      },
+      "am_food": {
+        "bolt": 333178.13,
+        "provider": 240847.39
+      },
+      "activation": {
+        "bolt": 803010.16,
+        "provider": 39071.86
+      },
+      "product_experiment": {
+        "bolt": 381.65,
+        "provider": 0.0
+      }
+    },
+    "unmapped_objectives": {
+      "provider_campaign_locations": {
+        "bolt": 0.0,
+        "provider": 51208.42
+      },
+      "other": {
+        "bolt": 853.87,
+        "provider": 0.0
+      },
+      "provider_campaign_marketing_3rd_party_partnership": {
+        "bolt": 8472.86,
+        "provider": 0.0
+      },
+      "marketing_3rd_party_partnership": {
+        "bolt": 2687.32,
+        "provider": 0.0
+      },
+      "provider_campaign_portal": {
+        "bolt": 22.87,
+        "provider": 406869.85
+      }
+    }
+  },
+  "source": {
+    "gmv": "ng_public_spark.etl_delivery_order_monetary_metrics (ex-Bolt Market) \u2014 aligned with Looker dashboard 26798",
+    "spend": "ng_public_spark.etl_delivery_campaign_order_metrics (ex-Bolt Market) \u2014 aligned with Looker dashboard 6362",
+    "targets": "Google Sheet Global Summary + BA Forecast (capital allocation)",
+    "targets_file": "17f7Mhrf8gZtonz_Oy11ORPp5IshF5JLK-oCe6ZDSsKE",
+    "capital_allocation_label": "Capital Allocation Demand Incentive - JUNE 2026"
+  },
+  "forward": {
+    "month": "2026-07",
+    "label": "Capital Allocation Demand Incentive - JULY 2026",
+    "gmv_target": 32169538.0,
+    "am_di_pct": 0.017,
+    "am_monthly": 546882.15,
+    "weekly_am_avg": 123489.52,
+    "di_pct": {
+      "new_city": 0.0022,
+      "elc": 0.0008,
+      "churn_untested": 0.0,
+      "am_food": 0.0124,
+      "marketing_food": 0.0046,
+      "bdm_3p": 0.0023,
+      "store_1p": 0.0023,
+      "untested_total": 0.0246,
+      "bolt_plus": 0.021,
+      "activation": 0.0346,
+      "churned": 0.0104,
+      "occasional": 0.0441,
+      "total_bolt": 0.1343,
+      "total_campaign": 0.245
+    }
+  }
+}

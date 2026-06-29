@@ -57,10 +57,26 @@ jobs:
           fi
           python3 scripts/refresh_data.py $ARGS
 
+      - name: Refresh budget envelopes (data/*-budget.json)
+        env:
+          DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+        run: |
+          python3 scripts/build_ca_targets.py
+          ARGS=""
+          if [ -n "${{ github.event.inputs.countries }}" ]; then
+            ARGS=$(echo "${{ github.event.inputs.countries }}" | tr ',' ' ')
+          fi
+          python3 scripts/refresh_budget_data.py $ARGS
+
       - name: Refresh investment dashboard CSVs
         env:
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: python3 scripts/refresh_investment_data.py
+
+      - name: Learn forecast corrections (snapshots vs actuals)
+        run: |
+          python3 scripts/build_cost_benchmarks.py
+          python3 scripts/learn_from_snapshots.py
 
       - name: Commit and push updated data
         run: |

@@ -1,0 +1,183 @@
+{
+  "country": "bg",
+  "country_name": "Bulgaria",
+  "month": "2026-06",
+  "as_of": "2026-06-28",
+  "refreshed": "2026-06-28T10:23:56Z",
+  "gmv_target": 1882543.0,
+  "gmv_mtd": 1420476.42,
+  "gmv_run_rate_eom": 1521939.02,
+  "gmv_pace_pct": 0.8084,
+  "elapsed_days": 28,
+  "days_in_month": 30,
+  "days_left": 3,
+  "weeks_left": 0.43,
+  "di_pct": {
+    "new_city": 0.0,
+    "elc": 0.0,
+    "churn_untested": 0.0,
+    "am_food": 0.0001,
+    "marketing_food": 0.0,
+    "bdm_3p": 0.0,
+    "store_1p": 0.0,
+    "untested_total": 0.0001,
+    "bolt_plus": 0.0,
+    "activation": 0.044,
+    "churned": 0.0085,
+    "occasional": 0.148,
+    "total_bolt": 0.207,
+    "total_campaign": 0.207
+  },
+  "am_di_pct": 0.0001,
+  "budget_eur": {
+    "total_bolt_monthly": 389686.4,
+    "total_bolt_rr_paced": 315041.38,
+    "am_monthly": 188.25,
+    "am_rr_paced": 152.19,
+    "remaining_total_bolt": 8182.91,
+    "remaining_am": -895.36,
+    "weekly_am_envelope": -2089.16,
+    "daily_am_envelope": -298.45
+  },
+  "mtd_actual": {
+    "bolt_spend": 306858.47,
+    "am_spend": 1047.55,
+    "by_objective": {
+      "reactivation": {
+        "bolt": 40490.23,
+        "provider": 0.0
+      },
+      "provider_campaign_churn_prevention": {
+        "bolt": 394.43,
+        "provider": 0.0
+      },
+      "marketing": {
+        "bolt": 428.02,
+        "provider": 0.0
+      },
+      "new_city_launch": {
+        "bolt": 12054.54,
+        "provider": 0.0
+      },
+      "engagement": {
+        "bolt": 83320.36,
+        "provider": 0.0
+      },
+      "provider_campaign_ELC_merchant": {
+        "bolt": 223.11,
+        "provider": 0.0
+      },
+      "sp_reactivation": {
+        "bolt": 12499.69,
+        "provider": 8333.12
+      },
+      "sp_engagement": {
+        "bolt": 52443.42,
+        "provider": 34962.28
+      },
+      "provider_campaign_marketing": {
+        "bolt": 0.0,
+        "provider": 6328.14
+      },
+      "activation": {
+        "bolt": 103605.97,
+        "provider": 0.0
+      },
+      "provider_marketing_calendar_global_event": {
+        "bolt": 0.0,
+        "provider": 1482.99
+      },
+      "sp_activation": {
+        "bolt": 1171.15,
+        "provider": 780.77
+      },
+      "provider_campaign_portal": {
+        "bolt": 0.0,
+        "provider": 3608.84
+      },
+      "provider_campaign_sales_benefit": {
+        "bolt": 225.1,
+        "provider": 565.58
+      },
+      "other": {
+        "bolt": 2.45,
+        "provider": 0.0
+      }
+    },
+    "by_bucket": {
+      "churned": {
+        "bolt": 52989.92,
+        "provider": 8333.12
+      },
+      "am_food": {
+        "bolt": 619.53,
+        "provider": 565.58
+      },
+      "marketing_food": {
+        "bolt": 428.02,
+        "provider": 6328.14
+      },
+      "new_city": {
+        "bolt": 12054.54,
+        "provider": 0.0
+      },
+      "occasional": {
+        "bolt": 135763.78,
+        "provider": 34962.28
+      },
+      "bdm_3p": {
+        "bolt": 223.11,
+        "provider": 0.0
+      },
+      "activation": {
+        "bolt": 104777.12,
+        "provider": 780.77
+      }
+    },
+    "unmapped_objectives": {
+      "provider_marketing_calendar_global_event": {
+        "bolt": 0.0,
+        "provider": 1482.99
+      },
+      "provider_campaign_portal": {
+        "bolt": 0.0,
+        "provider": 3608.84
+      },
+      "other": {
+        "bolt": 2.45,
+        "provider": 0.0
+      }
+    }
+  },
+  "source": {
+    "gmv": "ng_public_spark.etl_delivery_order_monetary_metrics (ex-Bolt Market) \u2014 aligned with Looker dashboard 26798",
+    "spend": "ng_public_spark.etl_delivery_campaign_order_metrics (ex-Bolt Market) \u2014 aligned with Looker dashboard 6362",
+    "targets": "Google Sheet Global Summary + BA Forecast (capital allocation)",
+    "targets_file": "17f7Mhrf8gZtonz_Oy11ORPp5IshF5JLK-oCe6ZDSsKE",
+    "capital_allocation_label": "Capital Allocation Demand Incentive - JUNE 2026"
+  },
+  "forward": {
+    "month": "2026-07",
+    "label": "Capital Allocation Demand Incentive - JULY 2026",
+    "gmv_target": 1763743.0,
+    "am_di_pct": 0.0001,
+    "am_monthly": 176.37,
+    "weekly_am_avg": 39.83,
+    "di_pct": {
+      "new_city": 0.0,
+      "elc": 0.0,
+      "churn_untested": 0.0,
+      "am_food": 0.0001,
+      "marketing_food": 0.0,
+      "bdm_3p": 0.0,
+      "store_1p": 0.0,
+      "untested_total": 0.0001,
+      "bolt_plus": 0.0,
+      "activation": 0.044,
+      "churned": 0.0085,
+      "occasional": 0.148,
+      "total_bolt": 0.207,
+      "total_campaign": 0.207
+    }
+  }
+}

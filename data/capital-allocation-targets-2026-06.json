@@ -1,0 +1,308 @@
+{
+  "month": "2026-06",
+  "sheet_id": "17f7Mhrf8gZtonz_Oy11ORPp5IshF5JLK-oCe6ZDSsKE",
+  "label": "Capital Allocation Demand Incentive - JUNE 2026",
+  "refreshed": "2026-06-28",
+  "countries": {
+    "ee": {
+      "country_name": "Estonia",
+      "gmv_target": 11791554.0,
+      "di_pct": {
+        "new_city": 0.0,
+        "elc": 0.0005,
+        "churn_untested": 0.0,
+        "am_food": 0.0031,
+        "marketing_food": 0.0022,
+        "bdm_3p": 0.0024,
+        "store_1p": 0.0102,
+        "untested_total": 0.0183,
+        "bolt_plus": 0.034,
+        "activation": 0.004,
+        "churned": 0.0097,
+        "occasional": 0.0204,
+        "total_bolt": 0.08650000000000001,
+        "total_campaign": 0.156
+      }
+    },
+    "lv": {
+      "country_name": "Latvia",
+      "gmv_target": 8896926.0,
+      "di_pct": {
+        "new_city": 0.0007000000000000001,
+        "elc": 0.0013,
+        "churn_untested": 0.0,
+        "am_food": 0.0032,
+        "marketing_food": 0.0029,
+        "bdm_3p": 0.0007000000000000001,
+        "store_1p": 0.0059,
+        "untested_total": 0.0146,
+        "bolt_plus": 0.027000000000000003,
+        "activation": 0.0046,
+        "churned": 0.0089,
+        "occasional": 0.0268,
+        "total_bolt": 0.08199999999999999,
+        "total_campaign": 0.153
+      }
+    },
+    "lt": {
+      "country_name": "Lithuania",
+      "gmv_target": 14886853.0,
+      "di_pct": {
+        "new_city": 0.0005,
+        "elc": 0.0008,
+        "churn_untested": 0.0,
+        "am_food": 0.002,
+        "marketing_food": 0.0062,
+        "bdm_3p": 0.0014000000000000002,
+        "store_1p": 0.0034999999999999996,
+        "untested_total": 0.014499999999999999,
+        "bolt_plus": 0.026000000000000002,
+        "activation": 0.005600000000000001,
+        "churned": 0.0108,
+        "occasional": 0.026000000000000002,
+        "total_bolt": 0.0833,
+        "total_campaign": 0.153
+      }
+    },
+    "mt": {
+      "country_name": "Malta",
+      "gmv_target": 11614361.0,
+      "di_pct": {
+        "new_city": 0.0,
+        "elc": 0.0003,
+        "churn_untested": 0.0,
+        "am_food": 0.005,
+        "marketing_food": 0.0019,
+        "bdm_3p": 0.002,
+        "store_1p": 0.0,
+        "untested_total": 0.0092,
+        "bolt_plus": 0.016,
+        "activation": 0.0207,
+        "churned": 0.008,
+        "occasional": 0.024300000000000002,
+        "total_bolt": 0.0784,
+        "total_campaign": 0.166
+      }
+    },
+    "gh": {
+      "country_name": "Ghana",
+      "gmv_target": 4374182.0,
+      "di_pct": {
+        "new_city": 0.0015,
+        "elc": 0.0025,
+        "churn_untested": 0.0006,
+        "am_food": 0.004,
+        "marketing_food": 0.004,
+        "bdm_3p": 0.0025,
+        "store_1p": 0.0,
+        "untested_total": 0.0151,
+        "bolt_plus": 0.0,
+        "activation": 0.0146,
+        "churned": 0.001,
+        "occasional": 0.0007000000000000001,
+        "total_bolt": 0.031400000000000004,
+        "total_campaign": 0.07200000000000001
+      }
+    },
+    "ro": {
+      "country_name": "Romania",
+      "gmv_target": 32125745.0,
+      "di_pct": {
+        "new_city": 0.0029,
+        "elc": 0.0008,
+        "churn_untested": 0.0,
+        "am_food": 0.0115,
+        "marketing_food": 0.0024,
+        "bdm_3p": 0.0029,
+        "store_1p": 0.0023,
+        "untested_total": 0.0229,
+        "bolt_plus": 0.019,
+        "activation": 0.025,
+        "churned": 0.0092,
+        "occasional": 0.0644,
+        "total_bolt": 0.1405,
+        "total_campaign": 0.273
+      }
+    },
+    "sk": {
+      "country_name": "Slovakia",
+      "gmv_target": 9836468.0,
+      "di_pct": {
+        "new_city": 0.02,
+        "elc": 0.0006,
+        "churn_untested": 0.0014000000000000002,
+        "am_food": 0.002,
+        "marketing_food": 0.0,
+        "bdm_3p": 0.0007000000000000001,
+        "store_1p": 0.0,
+        "untested_total": 0.0246,
+        "bolt_plus": 0.019,
+        "activation": 0.0273,
+        "churned": 0.0089,
+        "occasional": 0.068,
+        "total_bolt": 0.1476,
+        "total_campaign": 0.19
+      }
+    },
+    "ua": {
+      "country_name": "Ukraine",
+      "gmv_target": 8366601.0,
+      "di_pct": {
+        "new_city": 0.01,
+        "elc": 0.0004,
+        "churn_untested": 0.0,
+        "am_food": 0.006999999999999999,
+        "marketing_food": 0.0034999999999999996,
+        "bdm_3p": 0.0025,
+        "store_1p": 0.0,
+        "untested_total": 0.0235,
+        "bolt_plus": 0.009000000000000001,
+        "activation": 0.0174,
+        "churned": 0.0078000000000000005,
+        "occasional": 0.0298,
+        "total_bolt": 0.08689999999999999,
+        "total_campaign": 0.111
+      }
+    },
+    "cz": {
+      "country_name": "Czech Republic",
+      "gmv_target": 11896375.0,
+      "di_pct": {
+        "new_city": 0.024300000000000002,
+        "elc": 0.0013,
+        "churn_untested": 0.0015,
+        "am_food": 0.0070999999999999995,
+        "marketing_food": 0.0044,
+        "bdm_3p": 0.0006,
+        "store_1p": 0.0,
+        "untested_total": 0.0392,
+        "bolt_plus": 0.024,
+        "activation": 0.0286,
+        "churned": 0.0111,
+        "occasional": 0.038599999999999995,
+        "total_bolt": 0.1411,
+        "total_campaign": 0.22899999999999998
+      }
+    },
+    "cy": {
+      "country_name": "Cyprus",
+      "gmv_target": 6454147.0,
+      "di_pct": {
+        "new_city": 0.0003,
+        "elc": 0.003,
+        "churn_untested": 0.0008,
+        "am_food": 0.006999999999999999,
+        "marketing_food": 0.006,
+        "bdm_3p": 0.0024,
+        "store_1p": 0.0,
+        "untested_total": 0.0194,
+        "bolt_plus": 0.02,
+        "activation": 0.0279,
+        "churned": 0.0104,
+        "occasional": 0.0617,
+        "total_bolt": 0.1398,
+        "total_campaign": 0.2
+      }
+    },
+    "pt": {
+      "country_name": "Portugal",
+      "gmv_target": 7088905.0,
+      "di_pct": {
+        "new_city": 0.010700000000000001,
+        "elc": 0.002,
+        "churn_untested": 0.001,
+        "am_food": 0.0067,
+        "marketing_food": 0.0034999999999999996,
+        "bdm_3p": 0.0007000000000000001,
+        "store_1p": 0.0044,
+        "untested_total": 0.028900000000000002,
+        "bolt_plus": 0.006,
+        "activation": 0.0273,
+        "churned": 0.0148,
+        "occasional": 0.0131,
+        "total_bolt": 0.0902,
+        "total_campaign": 0.203
+      }
+    },
+    "az": {
+      "country_name": "Azerbaijan",
+      "gmv_target": 2221973.0,
+      "di_pct": {
+        "new_city": 0.004,
+        "elc": 0.0011,
+        "churn_untested": 0.0,
+        "am_food": 0.0055000000000000005,
+        "marketing_food": 0.006,
+        "bdm_3p": 0.0028000000000000004,
+        "store_1p": 0.0,
+        "untested_total": 0.0194,
+        "bolt_plus": 0.009000000000000001,
+        "activation": 0.0129,
+        "churned": 0.0086,
+        "occasional": 0.0463,
+        "total_bolt": 0.0958,
+        "total_campaign": 0.23800000000000002
+      }
+    },
+    "ke": {
+      "country_name": "Kenya",
+      "gmv_target": 1087644.0,
+      "di_pct": {
+        "new_city": 0.0013,
+        "elc": 0.0033,
+        "churn_untested": 0.0016,
+        "am_food": 0.045,
+        "marketing_food": 0.006,
+        "bdm_3p": 0.001,
+        "store_1p": 0.0,
+        "untested_total": 0.0581,
+        "bolt_plus": 0.0,
+        "activation": 0.008,
+        "churned": 0.0,
+        "occasional": 0.0002,
+        "total_bolt": 0.0663,
+        "total_campaign": 0.12
+      }
+    },
+    "pl": {
+      "country_name": "Poland",
+      "gmv_target": 4488556,
+      "di_pct": {
+        "new_city": 0.005,
+        "elc": 0.001,
+        "churn_untested": 0.001,
+        "am_food": 0.005,
+        "marketing_food": 0.008,
+        "bdm_3p": 0.0007,
+        "store_1p": 0.0044,
+        "untested_total": 0.0289,
+        "bolt_plus": 0.006,
+        "activation": 0.0273,
+        "churned": 0.0148,
+        "occasional": 0.0131,
+        "total_bolt": 0.0902,
+        "total_campaign": 0.203
+      }
+    },
+    "bg": {
+      "country_name": "Bulgaria",
+      "gmv_target": 1882543,
+      "di_pct": {
+        "new_city": 0.0,
+        "elc": 0.0,
+        "churn_untested": 0.0,
+        "am_food": 0.0001,
+        "marketing_food": 0.0,
+        "bdm_3p": 0.0,
+        "store_1p": 0.0,
+        "untested_total": 0.0001,
+        "bolt_plus": 0.0,
+        "activation": 0.044,
+        "churned": 0.0085,
+        "occasional": 0.148,
+        "total_bolt": 0.207,
+        "total_campaign": 0.207
+      }
+    }
+  }
+}

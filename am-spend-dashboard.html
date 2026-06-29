@@ -161,6 +161,27 @@
   .budget-bar-fill.ok { background: var(--accent); }
   .budget-bar-fill.warn { background: #e67e22; }
   .budget-bar-fill.over { background: #e74c3c; }
+  .budget-envelope {
+    margin: 0 32px 0; padding: 14px 18px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 10px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px 20px;
+  }
+  .budget-envelope .be-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+  .budget-envelope .be-value { font-size: 16px; font-weight: 700; margin-top: 2px; }
+  .budget-envelope .be-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .budget-envelope .be-header { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 2px; }
+  .budget-envelope .be-header h3 { font-size: 13px; font-weight: 600; }
+  .budget-envelope .be-tag { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+  .budget-envelope .be-warn { color: #e67e22; }
+  .budget-envelope .be-over { color: #e74c3c; }
+  .est-badge { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 600; text-transform: uppercase; letter-spacing: .3px; margin-left: 4px; vertical-align: middle; }
+  .est-badge.history { background: rgba(52,211,153,.15); color: var(--accent); }
+  .est-badge.blended { background: rgba(99,102,241,.15); color: var(--bolt); }
+  .est-badge.scaled { background: rgba(245,158,11,.15); color: var(--provider); }
+  .est-badge.formula { background: rgba(139,143,163,.15); color: var(--text-dim); }
+  .est-badge.benchmark { background: rgba(56,189,248,.15); color: #38bdf8; }
+  .est-badge.benchmark.low { background: rgba(231,76,60,.13); color: #e08e7a; }
+  .est-badge.benchmark.medium { background: rgba(245,158,11,.13); color: var(--provider); }
   .budget-am-bar {
     height: 4px; background: var(--surface); border-radius: 2px; margin-top: 4px; overflow: hidden;
   }
@@ -437,6 +458,24 @@
   </div>
 </div>
 
+<div class="budget-envelope" id="budgetEnvelope" style="display:none;margin-top:14px;margin-bottom:14px">
+  <div class="be-header">
+    <h3>AM Budget Envelope</h3>
+    <span class="be-tag" id="beMonthTag">—</span>
+    <span class="be-sub" id="beSourceTag" style="margin-left:auto"></span>
+  </div>
+  <div><div class="be-label">GMV Target</div><div class="be-value" id="beGmvTarget">—</div><div class="be-sub" id="beGmvMtd">—</div></div>
+  <div><div class="be-label">GMV Pace</div><div class="be-value" id="beGmvPace">—</div><div class="be-sub" id="beGmvRr">—</div></div>
+  <div><div class="be-label">AM DI% (CA)</div><div class="be-value" id="beAmPct">—</div><div class="be-sub" id="beAmMonthly">—</div></div>
+  <div><div class="be-label">AM RR Budget</div><div class="be-value" id="beAmRr">—</div><div class="be-sub" id="beAmMtd">—</div></div>
+  <div><div class="be-label">Remaining AM</div><div class="be-value" id="beAmRemaining">—</div><div class="be-sub" id="beAmDaily">—</div></div>
+  <div><div class="be-label">Weekly Envelope</div><div class="be-value" id="beWeeklyEnv" style="color:var(--bolt)">—</div><div class="be-sub" id="bePlannedVs">—</div></div>
+  <div id="beForwardWrap" style="display:none;grid-column:1/-1;padding-top:8px;border-top:1px solid var(--border);margin-top:4px">
+    <div class="be-label">Forward plan (<span id="beForwardMonth">—</span>)</div>
+    <div class="be-sub" id="beForwardDetail">—</div>
+  </div>
+</div>
+
 <div class="summary-cards">
   <div class="s-card accent">
     <div class="s-label">Total Campaigns</div>
@@ -449,12 +488,10 @@
     <div class="s-sub" id="sTotalCostSub">per week across all campaigns</div>
   </div>
   <div class="s-card bolt">
-    <div class="budget-input-wrap">
-      <label>Weekly Bolt Budget</label>
-      <span class="prefix">€</span>
-      <input type="number" id="boltBudget" placeholder="0" min="0" step="100" oninput="saveBudget(); refresh()">
-    </div>
-    <div class="s-label">Bolt Share / Week</div>
+    <div class="s-label">Weekly AM Envelope</div>
+    <div class="s-value" id="sWeeklyEnvelope">—</div>
+    <div class="s-sub" id="sEnvelopeSub">from capital allocation + RR pace</div>
+    <div class="s-label" style="margin-top:10px">Bolt Share / Week (planned)</div>
     <div class="s-value" id="sBoltCost">€0</div>
     <div class="s-sub" id="sBoltPct">0% of total</div>
     <div class="budget-bar" id="budgetBarWrap" style="display:none"><div class="budget-bar-fill ok" id="budgetBarFill"></div></div>
@@ -513,6 +550,7 @@
     <span class="sp-toggle">▸ expand</span>
   </div>
   <div class="sp-body" id="spBody">
+    <div id="learningBanner" style="display:none;font-size:12px;padding:8px 12px;margin-bottom:10px;border-radius:6px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);color:#7dd3fc"></div>
     <div class="sp-actions">
       <button class="primary" onclick="takeSnapshot()">📸 Snapshot Now</button>
       <button onclick="exportAllCountrySnapshots()" title="Download JSON of every country’s snapshots — merge into data/team-snapshots.json and push to share with all AMs">⬇ Export all countries</button>
@@ -562,6 +600,219 @@ let WEEKS_IN_DATA = RECENT_WEEKS_FOR_AVG;
 let _CURRENT_COUNTRY = localStorage.getItem('bolt_country') || 'mt';
 const _COUNTRIES = {};
 let _countryDataLoaded = {};
+let _BUDGET_DATA = null;
+let _COST_BENCHMARKS = null;
+let _CORRECTIONS = null;       // server-side learned corrections (data/{cc}-corrections.json)
+let _LIVE_CORRECTIONS = null;  // client-side refresh from local snapshots vs dbx actuals
+
+// Empirical peer cost-rate benchmarks (cold-start path). Loaded once, shared across countries.
+async function _loadCostBenchmarks() {
+  if (_COST_BENCHMARKS !== null) return;
+  try {
+    const resp = await fetch('data/cost-benchmarks.json?t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    _COST_BENCHMARKS = await resp.json();
+  } catch (e) {
+    console.warn('Cost benchmarks not available:', e);
+    _COST_BENCHMARKS = { levels: {} };
+  }
+}
+
+// Hierarchical lookup: cc|cat|disc|seg → cc|cat|disc → cc|cat|seg → cc|cat → cat|disc|seg → cat|disc → cat
+function _benchmarkCostRate(cat, disc, segCode) {
+  if (!_COST_BENCHMARKS || !_COST_BENCHMARKS.levels) return null;
+  const cc = _CURRENT_COUNTRY;
+  const d = Math.round(disc || 0);
+  const lv = _COST_BENCHMARKS.levels;
+  const keys = [
+    `${cc}|${cat}|${d}|${segCode}`,
+    `${cc}|${cat}|${d}`,
+    `${cc}|${cat}|${segCode}`,
+    `${cc}|${cat}`,
+    `${cat}|${d}|${segCode}`,
+    `${cat}|${d}`,
+    `${cat}`,
+  ];
+  for (let i = 0; i < keys.length; i++) {
+    const hit = lv[keys[i]];
+    if (hit) return { cr: hit.cr, n: hit.n, level: i, key: keys[i] };
+  }
+  return null;
+}
+
+function _segCodeFromName(seg) {
+  const s = (seg || '').toLowerCase();
+  if (s.includes('enterprise')) return 'E';
+  if (s.includes('mid')) return 'M';
+  if (s.includes('smb')) return 'S';
+  return 'X';
+}
+
+async function _loadCorrections(cc) {
+  try {
+    const resp = await fetch('data/' + cc + '-corrections.json?t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    _CORRECTIONS = await resp.json();
+    if (_CORRECTIONS && _CORRECTIONS.weeks_evaluated) _renderLearningBanner();
+  } catch (e) {
+    _CORRECTIONS = null;
+  }
+}
+
+/** Merge server corrections (CI) with live client-side learning from local snapshots. */
+function _effectiveCorrections() {
+  const base = _CORRECTIONS || {};
+  const live = _LIVE_CORRECTIONS;
+  if (!live) return base;
+  // Prefer live if it evaluated a more recent week than server file.
+  const baseWeek = base.latest_week || '';
+  const liveWeek = live.latest_week || '';
+  if (liveWeek >= baseWeek) {
+    return Object.assign({}, base, live, {
+      by_provider: Object.assign({}, base.by_provider || {}, live.by_provider || {}),
+      by_category: Object.assign({}, base.by_category || {}, live.by_category || {}),
+    });
+  }
+  return base;
+}
+
+/**
+ * Learned correction multiplier from last week's snapshot vs Databricks actuals.
+ * Priority: provider-specific → category → portfolio. Capped to avoid wild swings.
+ */
+function _correctionMultiplier(pid, cat) {
+  const corr = _effectiveCorrections();
+  if (!corr) return 1.0;
+  const p = (corr.by_provider || {})[String(pid)];
+  if (p && p.ratio) return Math.min(2, Math.max(0.5, p.ratio));
+  const c = (corr.by_category || {})[cat];
+  if (c) return Math.min(2, Math.max(0.5, c));
+  const pr = corr.portfolio && corr.portfolio.ratio;
+  if (pr) return Math.min(1.35, Math.max(0.65, pr));
+  return 1.0;
+}
+
+function _applyCorrection(est, pid, cat) {
+  const mult = _correctionMultiplier(pid, cat);
+  if (Math.abs(mult - 1) < 0.02) return est;
+  const total = est.total * mult;
+  const provShare = est.prov / (est.total || 1);
+  return Object.assign({}, est, {
+    total,
+    bolt: total * (1 - provShare),
+    prov: total * provShare,
+    learned: true,
+    correction: mult,
+  });
+}
+
+/** Auto-learn: compare latest snapshot whose week has dbx actuals (runs on dashboard load). */
+function _autoLearnFromSnapshots() {
+  if (typeof _DBX_ACTUALS === 'undefined' || !Object.keys(_DBX_ACTUALS).length) return;
+  const snaps = getSnapshotsMerged();
+  if (!snaps.length) return;
+
+  const weekResults = [];
+  for (const snap of snaps.slice(0, 8)) {
+    const camps = snap.campaigns || [];
+    const weeks = camps.map(c => c.week).filter(Boolean);
+    const wk = weeks.length ? Math.round(weeks.reduce((a, b) => a + b, 0) / weeks.length) : (snap.isoWeek || 0) + 1;
+    const year = parseInt(String(snap.date || '').slice(0, 4), 10) || new Date().getFullYear();
+    const wkStr = year + '-W' + String(wk).padStart(2, '0');
+    if (!_DBX_ACTUALS[wkStr]) continue;
+
+    const byPid = _aggregateByProvider(camps);
+    const actuals = _buildMatchedActuals(wkStr, byPid);
+    if (!actuals) continue;
+
+    const score = _scoreWeek(byPid, actuals);
+    if (!score) continue;
+
+    const providerRatios = {};
+    const catAccum = {};
+    for (const [pid, p] of Object.entries(byPid)) {
+      const act = actuals[pid];
+      if (!act || act.total <= 0 || p.estTotal <= 0) continue;
+      providerRatios[pid] = Math.min(2.5, Math.max(0.4, act.total / p.estTotal));
+      p.campaigns.forEach(c => {
+        const cat = _campTypeToCat(c.type);
+        if (!catAccum[cat]) catAccum[cat] = { est: 0, act: 0 };
+        catAccum[cat].est += c.estTotal || 0;
+        catAccum[cat].act += act.total * (c.estTotal / p.estTotal);
+      });
+    }
+    const byCategory = {};
+    for (const [cat, v] of Object.entries(catAccum)) {
+      if (v.est > 0) byCategory[cat] = Math.min(2, Math.max(0.5, v.act / v.est));
+    }
+    weekResults.push({
+      week: wkStr,
+      snap_date: snap.date,
+      portfolio_ratio: score.totalAct / score.totalEst,
+      matched: score.matched,
+      by_provider: providerRatios,
+      by_category: byCategory,
+    });
+  }
+  if (!weekResults.length) return;
+
+  const latest = weekResults[0];
+  const provOut = {};
+  weekResults.forEach(wr => {
+    for (const [pid, r] of Object.entries(wr.by_provider)) {
+      if (!provOut[pid]) provOut[pid] = [];
+      provOut[pid].push(r);
+    }
+  });
+  const byProvider = {};
+  for (const [pid, rs] of Object.entries(provOut)) {
+    rs.sort((a, b) => a - b);
+    byProvider[pid] = { ratio: Math.min(2, Math.max(0.5, rs[Math.floor(rs.length / 2)])), weeks: rs.length };
+  }
+  const catMerge = {};
+  weekResults.forEach(wr => {
+    for (const [cat, r] of Object.entries(wr.by_category)) {
+      if (!catMerge[cat]) catMerge[cat] = [];
+      catMerge[cat].push(r);
+    }
+  });
+  const byCategory = {};
+  for (const [cat, rs] of Object.entries(catMerge)) {
+    rs.sort((a, b) => a - b);
+    byCategory[cat] = Math.min(2, Math.max(0.5, rs[Math.floor(rs.length / 2)]));
+  }
+  const portRatios = weekResults.map(w => w.portfolio_ratio).sort((a, b) => a - b);
+  const portfolioRatio = Math.min(2, Math.max(0.5, portRatios[Math.floor(portRatios.length / 2)]));
+
+  _LIVE_CORRECTIONS = {
+    latest_week: latest.week,
+    latest_snap_date: latest.snap_date,
+    weeks_evaluated: weekResults.length,
+    portfolio: { ratio: portfolioRatio, bias_pct: Math.round((portfolioRatio - 1) * 1000) / 10 },
+    by_provider: byProvider,
+    by_category: byCategory,
+    _live: true,
+  };
+  _renderLearningBanner();
+}
+
+function _renderLearningBanner() {
+  const corr = _effectiveCorrections();
+  const el = document.getElementById('learningBanner');
+  if (!el || !corr || !corr.weeks_evaluated) {
+    if (el) el.style.display = 'none';
+    return;
+  }
+  const p = corr.portfolio || {};
+  const bias = p.bias_pct != null ? p.bias_pct : Math.round(((p.ratio || 1) - 1) * 1000) / 10;
+  const biasNote = bias > 5 ? 'model was underestimating' : bias < -5 ? 'model was overestimating' : 'model was close';
+  const src = corr._live ? 'live' : 'server';
+  el.style.display = '';
+  el.innerHTML = '<span style="font-weight:600">Learned from ' + corr.latest_week + '</span> · '
+    + corr.weeks_evaluated + ' week(s) · portfolio ' + (p.ratio || 1).toFixed(2) + 'x (' + (bias >= 0 ? '+' : '') + bias + '%) · '
+    + biasNote + ' · corrections applied to estimates'
+    + (src === 'live' ? ' <span style="opacity:.7">(browser)</span>' : '');
+}
 
 async function _loadCountryIndex() {
   try {
@@ -588,11 +839,76 @@ async function _loadCountryIndex() {
 function _getBudgetKey() { return 'am_spend_bolt_budget_' + _CURRENT_COUNTRY; }
 function _getSheetKey() { return 'bolt_sheet_url_' + _CURRENT_COUNTRY; }
 
+async function _loadBudgetData(cc) {
+  try {
+    const resp = await fetch('data/' + cc + '-budget.json?t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    _BUDGET_DATA = await resp.json();
+  } catch (e) {
+    console.warn('Budget data not available for ' + cc + ':', e);
+    _BUDGET_DATA = null;
+  }
+  _renderBudgetEnvelope();
+}
+
+function _renderBudgetEnvelope() {
+  const panel = document.getElementById('budgetEnvelope');
+  const b = _BUDGET_DATA;
+  if (!b || !b.budget_eur) {
+    if (panel) panel.style.display = 'none';
+    const envEl = document.getElementById('sWeeklyEnvelope');
+    if (envEl) envEl.textContent = '—';
+    return;
+  }
+  panel.style.display = '';
+  const pct = (v) => (v * 100).toFixed(2) + '%';
+  const pacePct = b.gmv_pace_pct || 0;
+  const paceClass = pacePct >= 0.95 && pacePct <= 1.05 ? '' : (pacePct < 0.9 ? ' be-warn' : '');
+  document.getElementById('beMonthTag').textContent = b.month + ' · as of ' + b.as_of;
+  document.getElementById('beSourceTag').textContent = 'Refreshed ' + (b.refreshed || '').slice(0, 10);
+  document.getElementById('beGmvTarget').textContent = fmt(b.gmv_target);
+  document.getElementById('beGmvMtd').textContent = 'MTD ' + fmt(b.gmv_mtd);
+  document.getElementById('beGmvPace').innerHTML = '<span class="' + paceClass + '">' + (pacePct * 100).toFixed(1) + '%</span>';
+  document.getElementById('beGmvRr').textContent = 'RR EOM ' + fmt(b.gmv_run_rate_eom);
+  document.getElementById('beAmPct').textContent = pct(b.am_di_pct || 0);
+  document.getElementById('beAmMonthly').textContent = 'Target ' + fmt(b.budget_eur.am_monthly);
+  document.getElementById('beAmRr').textContent = fmt(b.budget_eur.am_rr_paced);
+  document.getElementById('beAmMtd').textContent = 'MTD actual ' + fmt(b.mtd_actual.am_spend);
+  const rem = b.budget_eur.remaining_am;
+  document.getElementById('beAmRemaining').innerHTML = rem >= 0
+    ? fmt(rem) : '<span class="be-over">' + fmt(Math.abs(rem)) + ' over</span>';
+  document.getElementById('beAmDaily').textContent = (b.budget_eur.daily_am_envelope != null)
+    ? fmt(b.budget_eur.daily_am_envelope) + '/day · ' + (b.days_left || '?') + ' days left'
+    : '';
+  document.getElementById('beWeeklyEnv').innerHTML = rem >= 0
+    ? fmt(b.budget_eur.weekly_am_envelope)
+    : '<span class="be-over">' + fmt(Math.abs(b.budget_eur.weekly_am_envelope)) + ' over/wk</span>';
+  document.getElementById('sWeeklyEnvelope').innerHTML = rem >= 0
+    ? fmt(b.budget_eur.weekly_am_envelope)
+    : '<span class="be-over">' + fmt(Math.abs(b.budget_eur.weekly_am_envelope)) + ' over</span>';
+  const fwdWrap = document.getElementById('beForwardWrap');
+  if (b.forward && b.forward.am_monthly > 0) {
+    fwdWrap.style.display = '';
+    document.getElementById('beForwardMonth').textContent = b.forward.month;
+    document.getElementById('beForwardDetail').innerHTML =
+      'GMV target ' + fmt(b.forward.gmv_target) +
+      ' · AM ' + pct(b.forward.am_di_pct || 0) +
+      ' · monthly ' + fmt(b.forward.am_monthly) +
+      ' · ~' + fmt(b.forward.weekly_am_avg) + '/wk avg';
+  } else if (fwdWrap) {
+    fwdWrap.style.display = 'none';
+  }
+}
+
 async function _switchCountry(cc) {
   _CURRENT_COUNTRY = cc;
   localStorage.setItem('bolt_country', cc);
   const statusEl = document.getElementById('dataStatus');
   if (statusEl) { statusEl.textContent = 'Loading ' + cc.toUpperCase() + '...'; statusEl.style.background = 'var(--provider-dim)'; statusEl.style.color = 'var(--provider)'; }
+
+  await _loadCostBenchmarks();
+  await _loadCorrections(cc);
+  await _loadBudgetData(cc);
 
   try {
     const resp = await fetch('data/' + cc + '-dash.json');
@@ -605,12 +921,9 @@ async function _switchCountry(cc) {
     _DBX_ACTUALS_REFRESHED = data.refreshed || '';
     _countryDataLoaded[cc] = true;
 
-    const budgetVal = parseFloat(localStorage.getItem(_getBudgetKey())) || 0;
-    if (budgetVal > 0) document.getElementById('boltBudget').value = budgetVal;
-    else document.getElementById('boltBudget').value = '';
-
     if (statusEl) { statusEl.textContent = cc.toUpperCase(); statusEl.style.background = 'var(--accent-dim)'; statusEl.style.color = 'var(--accent)'; }
     _updateSheetUrl();
+    try { _autoLearnFromSnapshots(); } catch (e) { console.warn('autoLearn:', e); }
     loadLiveData();
     try { renderSnapshots(); } catch(e) { console.warn('renderSnapshots:', e); }
     try { showActiveCalibration(); } catch(e) { console.warn('showActiveCalibration:', e); }
@@ -2825,9 +3138,45 @@ function getUpliftFD(segment) { return getParam('uplift_fd', segment); }
 function getItemBasketShare(segment) { return getParam('item_basket_share', segment); }
 
 let BUDGET_KEY = 'am_spend_bolt_budget_' + _CURRENT_COUNTRY;
-function getBudget() { BUDGET_KEY = 'am_spend_bolt_budget_' + _CURRENT_COUNTRY; return parseFloat(localStorage.getItem(BUDGET_KEY)) || 0; }
-function saveBudget() { BUDGET_KEY = 'am_spend_bolt_budget_' + _CURRENT_COUNTRY; localStorage.setItem(BUDGET_KEY, document.getElementById('boltBudget').value || '0'); }
-function loadBudget() { const b = getBudget(); if (b > 0) document.getElementById('boltBudget').value = b; }
+function getBudget() {
+  if (_BUDGET_DATA && _BUDGET_DATA.budget_eur) {
+    const rem = _BUDGET_DATA.budget_eur.remaining_am;
+    const weekly = _BUDGET_DATA.budget_eur.weekly_am_envelope;
+    if (rem != null && rem <= 0) return 0;
+    if (weekly > 0) return weekly;
+  }
+  BUDGET_KEY = 'am_spend_bolt_budget_' + _CURRENT_COUNTRY;
+  return parseFloat(localStorage.getItem(BUDGET_KEY)) || 0;
+}
+function saveBudget() { /* legacy — budget now from capital allocation */ }
+function loadBudget() { _renderBudgetEnvelope(); }
+
+function _estSourceBadge(est) {
+  if (!est || !est.source || est.source === 'none') return '';
+  const labels = { history: 'history', blended: 'blended', scaled: 'scaled', formula: 'formula', benchmark: 'peer DI', driver: 'driver', 'driver-scaled': 'driver', 'driver-blended': 'driver', 'driver+history': 'driver' };
+
+  if (est.source === 'benchmark') {
+    const conf = est.confidence || 'low';
+    const levelNames = ['country·type·depth·seg', 'country·type·depth', 'country·type·seg', 'country·type', 'global·type·depth·seg', 'global·type·depth', 'global·type'];
+    let tip = 'No tier history — peer DI ' + (est.costRate * 100).toFixed(1) + '% of GMV · '
+      + (est.benchN || 0) + ' providers · ' + (levelNames[est.benchLevel] || '') + ' · ' + conf + ' confidence';
+    if (est.learned && est.correction) tip += ' · learned ×' + est.correction.toFixed(2);
+    const label = 'peer DI ' + (est.costRate * 100).toFixed(1) + '%';
+    return '<span class="est-badge benchmark ' + conf + '" title="' + tip + '">' + label + '</span>';
+  }
+
+  if (est.learned && est.correction) {
+    const tip2 = (est.tier || est.source || '') + ' · learned correction ×' + est.correction.toFixed(2) + ' from last week actuals';
+    return '<span class="est-badge blended" title="' + tip2 + '">learned</span>';
+  }
+
+  const cls = (est.source || '').startsWith('driver') ? 'blended' : (est.source === 'scaled' ? 'scaled' : est.source);
+  const tip = (est.tier || '') +
+    (est.histWeeks ? ' · ' + est.histWeeks + 'w' : '') +
+    (est.redemption ? ' · redeem ' + (est.redemption * 100).toFixed(0) + '%' : '') +
+    (est.dpo ? ' · €' + est.dpo.toFixed(2) + '/order' : '');
+  return '<span class="est-badge ' + cls + '" title="' + tip + '">' + (labels[est.source] || est.source) + '</span>';
+}
 
 // ─── Google Sheet webhook ───
 function _sheetUrlKey() { return 'am_spend_sheet_webhook_' + _CURRENT_COUNTRY; }
@@ -3092,6 +3441,179 @@ function _historyEstimate(pid, cat, discPct) {
   return { total: histTotal, bolt: histBolt, prov: histProv, weeks: h[3], dpo: h[4], matchType: tier.matchType, tier: tier.tier };
 }
 
+/**
+ * Most accurate path when tier history exists: observed weekly campaign spend for this
+ * provider+tier (camp_history h[0]), optionally scaled for discount depth.
+ * Backtest: ~5% MAPE vs ~34% for orders×redemption×dpo driver rebuild.
+ */
+function _tierSpendEstimate(pid, cat, discPct, weeklyOrders, costSharePct) {
+  const tier = _findTierHistory(pid, cat, discPct || 0);
+  if (!tier) return null;
+  if (_isCampaignTurnedOff(pid, cat)) return null;
+
+  const h = tier.h;
+  const scale = tier.scale;
+  const histDisc = h[5] || discPct || 0;
+  const histRedemption = h[8] || 0;
+  const histCampOrdersWk = (h[7] || 0) * scale;
+  let histDpo = (h[4] || 0) * scale;
+
+  // Prefer camp_orders × dpo (reconstructs tier weekly spend); fall back to stored avg.
+  let total = histCampOrdersWk > 0 && histDpo > 0
+    ? histCampOrdersWk * histDpo
+    : (h[0] || 0) * scale;
+  if (total <= 0) return null;
+
+  // Conservative volume adjustment only when provider order rate moved materially.
+  if (weeklyOrders > 0 && histRedemption > 0 && histCampOrdersWk > 0) {
+    const histProvOrders = histCampOrdersWk / histRedemption;
+    const volRatio = weeklyOrders / Math.max(histProvOrders, 1);
+    if (volRatio >= 1.2 || volRatio <= 0.83) {
+      total *= Math.min(1.25, Math.max(0.85, volRatio));
+    }
+  }
+
+  // Light recent blend for exact tier only (recent actuals are category-level, not tier-level).
+  const recent = tier.matchType === 'exact' ? _recentActualsAvg(pid, cat) : null;
+  if (recent && recent.total > 0) {
+    total = recent.total * 0.15 + total * 0.85;
+  }
+
+  const provShare = costSharePct / 100;
+  const src = tier.matchType === 'scaled' ? 'scaled' : (recent ? 'blended' : 'history');
+
+  return {
+    total,
+    bolt: total * (1 - provShare),
+    prov: total * provShare,
+    source: src,
+    matchType: tier.matchType,
+    tier: tier.tier,
+    weeks: h[3],
+    histWeeks: h[3],
+    redemption: histRedemption,
+    dpo: histDpo,
+    blended: !!recent
+  };
+}
+
+/**
+ * Driver-based forecast: provider weekly orders × historical redemption × discount/order.
+ * camp_history tier array: [total, bolt, prov, weeks, dpo, disc_pct, cost_share, camp_orders_wk, redemption_rate]
+ */
+function _driverEstimate(pid, cat, discPct, weeklyOrders, costSharePct, campType, segment, discountCap, mov, aov) {
+  const tier = _findTierHistory(pid, cat, discPct || 0);
+  if (!tier) return null;
+  if (_isCampaignTurnedOff(pid, cat)) return null;
+
+  const h = tier.h;
+  const scale = tier.scale;
+  const histDisc = h[5] || discPct || 0;
+  const histRedemption = (h[8] || 0);
+  const histCampOrdersWk = (h[7] || 0) * scale;
+  let histDpo = (h[4] || 0) * scale;
+
+  if (histRedemption <= 0 && histCampOrdersWk <= 0 && histDpo <= 0) return null;
+
+  let redemption = histRedemption > 0
+    ? histRedemption
+    : (weeklyOrders > 0 && histCampOrdersWk > 0 ? histCampOrdersWk / weeklyOrders : 0);
+  if (redemption <= 0) return null;
+  redemption = Math.min(0.98, Math.max(0.02, redemption));
+
+  const plannedDisc = discPct || histDisc;
+  if (cat === 'md' || cat === 'id') {
+    if (histDisc > 0 && plannedDisc > 0 && histDisc !== plannedDisc) {
+      histDpo = histDpo > 0 ? histDpo * (plannedDisc / histDisc) : histDpo;
+    }
+    if (histDpo <= 0 && aov > 0 && plannedDisc > 0) {
+      const itemShare = cat === 'id' ? getItemBasketShare(segment) : 1;
+      histDpo = aov * itemShare * (plannedDisc / 100);
+    }
+  } else if (cat === 'fd') {
+    if (histDpo <= 0) {
+      if (campType === 'Free Full Delivery') histDpo = FULL_DELIVERY_FEE;
+      else if (campType === 'Free Delivery (capped)' && discountCap > 0) histDpo = Math.min(discountCap, AVG_DELIVERY_FEE);
+      else histDpo = AVG_DELIVERY_FEE;
+    }
+  }
+  if (histDpo <= 0) return null;
+
+  const { rate: qualifyingRate } =
+    mov > 0 ? movQualifyingRate(aov, mov, ORDER_VALUE_CV) : { rate: 1.0 };
+
+  let campOrdersWk = weeklyOrders * redemption * qualifyingRate;
+
+  const recent = _recentActualsAvg(pid, cat);
+  if (recent && recent.total > 0) {
+    const recentCampOrders = recent.total / histDpo;
+    campOrdersWk = recentCampOrders * 0.7 + campOrdersWk * 0.3;
+  } else if (histCampOrdersWk > 0 && histRedemption > 0) {
+    const histProviderOrders = histCampOrdersWk / histRedemption;
+    const volumeFactor = Math.min(2.0, Math.max(0.5, weeklyOrders / Math.max(histProviderOrders, 1)));
+    campOrdersWk = weeklyOrders * redemption * qualifyingRate * volumeFactor;
+  }
+
+  const total = campOrdersWk * histDpo;
+  const provShare = costSharePct / 100;
+  const src = tier.matchType === 'scaled' ? 'driver-scaled' : (recent ? 'driver-blended' : 'driver');
+
+  return {
+    total,
+    bolt: total * (1 - provShare),
+    prov: total * provShare,
+    source: src,
+    matchType: tier.matchType,
+    tier: tier.tier,
+    weeks: h[3],
+    redemption,
+    dpo: histDpo,
+    campOrdersWk,
+    histWeeks: h[3],
+    blended: !!recent
+  };
+}
+
+/**
+ * Cold-start estimate (no tier history for this provider): apply an empirical peer
+ * cost-rate (discount€ / provider GMV, i.e. a DI%) derived from all providers that DID
+ * run similar campaigns. Hierarchical lookup by country/type/depth/segment.
+ *
+ *   weekly_cost = provider_weekly_orders × AOV × cost_rate_benchmark
+ *               = provider_weekly_GMV × benchmark DI%
+ *
+ * 5-fold provider-CV: portfolio bias ≈ 1.02x, provider-aggregate MAPE ≈ 48%
+ * (vs flat-constant formula ≈ 256% per-campaign). Per single new campaign it is still
+ * uncertain — flagged as low/medium confidence — but it is unbiased in aggregate.
+ */
+function _benchmarkEstimate(cat, disc, weeklyOrders, aov, segment, costSharePct) {
+  if (weeklyOrders <= 0 || aov <= 0) return null;
+  const segCode = _segCodeFromName(segment);
+  const bench = _benchmarkCostRate(cat, disc, segCode);
+  if (!bench) return null;
+
+  const weeklyGMV = weeklyOrders * aov;
+  const total = weeklyGMV * bench.cr;
+  const provShare = costSharePct / 100;
+
+  // Confidence: country-specific group (level 0-3) + many providers = higher.
+  let confidence = 'low';
+  if (bench.level <= 1 && bench.n >= 20) confidence = 'high';
+  else if (bench.level <= 3 || bench.n >= 30) confidence = 'medium';
+
+  return {
+    total,
+    bolt: total * (1 - provShare),
+    prov: total * provShare,
+    source: 'benchmark',
+    costRate: bench.cr,
+    benchN: bench.n,
+    benchLevel: bench.level,
+    benchKey: bench.key,
+    confidence,
+  };
+}
+
 function estimateCampaignCost(c) {
   const providerActiveWeeksRaw = Number(c[17]);
   const providerActiveWeeks = (isFinite(providerActiveWeeksRaw) && providerActiveWeeksRaw > 0)
@@ -3110,17 +3632,26 @@ function estimateCampaignCost(c) {
   if (weeklyOrders <= 0) return { total: 0, bolt: 0, prov: 0, source: 'none' };
 
   const cat = _campTypeToCat(campType);
-  const hist = _historyEstimate(pid, cat, bonusPct || 0);
 
+  // 1) Tier history — most accurate when this provider ran this/a similar campaign (~5% MAPE).
+  const tierEst = _tierSpendEstimate(pid, cat, bonusPct || 0, weeklyOrders, costSharePct);
+  if (tierEst) return _applyCorrection(tierEst, pid, cat);
+
+  // 2) Peer cost-rate benchmark — cold-start (no tier history).
+  const bench = _benchmarkEstimate(cat, bonusPct || 0, weeklyOrders, aov, segment, costSharePct);
+  if (bench) return _applyCorrection(bench, pid, cat);
+
+  // 3) Spend-average history path (only if tier estimate was blocked, e.g. turned off).
+  const hist = _historyEstimate(pid, cat, bonusPct || 0);
   if (hist) {
     const total = hist.total;
     const provShare = total * (costSharePct / 100);
     const boltShare = total * (1 - costSharePct / 100);
     const src = hist.blended ? 'blended' : (hist.matchType === 'scaled' ? 'scaled' : 'history');
-    return { total, bolt: boltShare, prov: provShare, source: src, histWeeks: hist.weeks, matchType: hist.matchType, tier: hist.tier };
+    return _applyCorrection({ total, bolt: boltShare, prov: provShare, source: src, histWeeks: hist.weeks, matchType: hist.matchType, tier: hist.tier }, pid, cat);
   }
 
-  // Fallback: formula-based estimate for providers without history
+  // 4) Formula fallback — only when no peer benchmark exists at all (very rare).
   const { rate: qualifyingRate, condMean: effectiveAov } =
     mov > 0 ? movQualifyingRate(aov, mov, ORDER_VALUE_CV) : { rate: 1.0, condMean: aov };
 
@@ -3162,7 +3693,7 @@ function estimateCampaignCost(c) {
   const provShare = total * (costSharePct / 100);
   const boltShare = total * (1 - costSharePct / 100);
 
-  return { total, bolt: boltShare, prov: provShare, source: 'formula' };
+  return _applyCorrection({ total, bolt: boltShare, prov: provShare, source: 'formula' }, pid, cat);
 }
 
 function fmt(n) { return '€' + Math.round(n).toLocaleString(); }
@@ -3527,6 +4058,7 @@ function refresh() {
   const budgetBar = document.getElementById('budgetBarWrap');
   const budgetFill = document.getElementById('budgetBarFill');
   const budgetSub = document.getElementById('budgetSub');
+  const bePlanned = document.getElementById('bePlannedVs');
   if (budget > 0) {
     const usedPct = totalBolt / budget;
     const remaining = budget - totalBolt;
@@ -3535,11 +4067,25 @@ function refresh() {
     budgetFill.style.width = Math.min(usedPct * 100, 100) + '%';
     budgetFill.className = 'budget-bar-fill ' + (usedPct > 1 ? 'over' : usedPct > 0.85 ? 'warn' : 'ok');
     budgetSub.innerHTML = remaining >= 0
-      ? `<span style="color:var(--accent)">${fmt(remaining)} remaining</span> · Bolt spend ${fmt(totalBolt)} of ${fmt(budget)} weekly budget (${(usedPct*100).toFixed(0)}% used)`
-      : `<span style="color:#e74c3c">${fmt(Math.abs(remaining))} over budget</span> · Bolt spend ${fmt(totalBolt)} of ${fmt(budget)} (${(usedPct*100).toFixed(0)}% used)`;
+      ? `<span style="color:var(--accent)">${fmt(remaining)} remaining</span> · Planned Bolt ${fmt(totalBolt)} of ${fmt(budget)} weekly envelope (${(usedPct*100).toFixed(0)}% used)`
+      : `<span style="color:#e74c3c">${fmt(Math.abs(remaining))} over envelope</span> · Planned Bolt ${fmt(totalBolt)} of ${fmt(budget)} (${(usedPct*100).toFixed(0)}% used)`;
+    if (bePlanned) {
+      bePlanned.innerHTML = remaining >= 0
+        ? `Planned ${fmt(totalBolt)}/wk vs ${fmt(budget)} envelope · <span style="color:var(--accent)">${fmt(remaining)} headroom</span>`
+        : `Planned ${fmt(totalBolt)}/wk vs ${fmt(budget)} envelope · <span class="be-over">${fmt(Math.abs(remaining))} over</span>`;
+    }
+  } else if (_BUDGET_DATA && _BUDGET_DATA.budget_eur && _BUDGET_DATA.budget_eur.remaining_am <= 0) {
+    const overAmt = Math.abs(_BUDGET_DATA.budget_eur.remaining_am);
+    budgetBar.style.display = '';
+    budgetSub.style.display = '';
+    budgetFill.style.width = '100%';
+    budgetFill.className = 'budget-bar-fill over';
+    budgetSub.innerHTML = `<span style="color:#e74c3c">${fmt(overAmt)} over monthly AM RR budget</span> · Planned ${fmt(totalBolt)}/wk`;
+    if (bePlanned) bePlanned.innerHTML = `<span class="be-over">Monthly AM RR exceeded by ${fmt(overAmt)}</span> · Planned ${fmt(totalBolt)}/wk`;
   } else {
     budgetBar.style.display = 'none';
     budgetSub.style.display = 'none';
+    if (bePlanned) bePlanned.textContent = _BUDGET_DATA ? 'No envelope — check budget refresh' : 'Run scripts/refresh_budget_data.py';
   }
 
   const amArr = Object.entries(amMap).sort((a, b) => b[1].totalCost - a[1].totalCost);
@@ -3621,7 +4167,7 @@ function renderTable(amArr, budget) {
         <td title="ID: ${c[1]}"><a href="#" onclick="openProviderModal(${c[1]});return false" style="color:var(--accent);text-decoration:none;font-weight:500">${c[3]}</a></td>
         <td>${disc}</td>
         <td>${share}</td>
-        <td>${fmt(est.total)}</td>
+        <td>${fmt(est.total)}${_estSourceBadge(est)}</td>
         <td class="cost-bolt">${fmt(est.bolt)}</td>
         <td class="cost-prov">${fmt(est.prov)}</td>
         <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c[16]}">${c[10]}</td>

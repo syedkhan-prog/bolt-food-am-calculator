@@ -162,7 +162,7 @@ def pull_camp_history(dbx, cc):
             ROUND(SUM(CAST(bolt_spend AS DOUBLE)), 2) AS bolt,
             ROUND(SUM(CAST(provider_spend AS DOUBLE)), 2) AS prov,
             ROUND(SUM(CAST(discount_value AS DOUBLE)), 2) AS total,
-            COUNT(*) AS order_count,
+            COUNT(DISTINCT order_id) AS order_count,
             ROUND(AVG(CAST(discount_value AS DOUBLE)), 2) AS avg_disc
         FROM ng_public_spark.etl_delivery_campaign_order_metrics
         WHERE country = '{cc}'
@@ -175,6 +175,22 @@ def pull_camp_history(dbx, cc):
                     WHEN LOWER(name) LIKE '%item%' AND spend_objective LIKE '%portal%' THEN 'id'
                     ELSE 'ot'
                  END
+    """)
+
+
+def pull_provider_weekly_orders(dbx, cc):
+    """Provider total orders per week — denominator for historical redemption rate."""
+    return dbx.query(f"""
+        SELECT
+            provider_id,
+            WEEKOFYEAR(order_created_date) AS iso_week,
+            YEAR(order_created_date) AS yr,
+            COUNT(DISTINCT order_id) AS total_orders
+        FROM ng_public_spark.etl_delivery_order_monetary_metrics
+        WHERE country = '{cc}'
+          AND order_created_date >= DATE_SUB(CURRENT_DATE(), 365)
+          AND is_bolt_market = false
+        GROUP BY provider_id, WEEKOFYEAR(order_created_date), YEAR(order_created_date)
     """)
 
 
@@ -274,7 +290,14 @@ def build_provider_lookup(providers, orders):
     return lookup
 
 
-def build_camp_history(hist_df):
+def build_camp_history(hist_df, provider_weekly_orders_df=None):
+    prov_weekly = {}
+    if provider_weekly_orders_df is not None:
+        for _, r in provider_weekly_orders_df.iterrows():
+            pid = str(int(r['provider_id']))
+            wk = f"{int(r['yr'])}-W{int(r['iso_week'])}"
+            prov_weekly.setdefault(pid, {})[wk] = int(r['total_orders'])
+
     history = {}
     for _, r in hist_df.iterrows():
         pid = str(int(r['provider_id']))
@@ -309,6 +332,14 @@ def build_camp_history(hist_df):
             cost_share = next(iter(weeks.values()))['cost_share']
 
             avg_disc_per_order = round(total_disc_sum / total_orders, 2) if total_orders else 0
+            prov_orders_in_camp_weeks = sum(
+                prov_weekly.get(pid, {}).get(wk, 0) for wk in weeks.keys()
+            )
+            redemption_rate = (
+                round(total_orders / prov_orders_in_camp_weeks, 4)
+                if prov_orders_in_camp_weeks > 0 else 0.0
+            )
+            camp_orders_wk = round(total_orders / n_weeks, 2) if n_weeks else 0.0
             result[pid][tier_key] = [
                 round(total_total / n_weeks, 2),
                 round(total_bolt / n_weeks, 2),
@@ -316,7 +347,9 @@ def build_camp_history(hist_df):
                 n_weeks,
                 avg_disc_per_order,
                 disc_pct,
-                cost_share
+                cost_share,
+                camp_orders_wk,
+                redemption_rate,
             ]
     return result
 
@@ -337,13 +370,15 @@ def process_country(dbx, cc):
     weekly_actuals = pull_weekly_actuals(dbx, cc)
     print(f"  [{cc}] Pulling campaign history (12 months)...")
     camp_hist_raw = pull_camp_history(dbx, cc)
+    print(f"  [{cc}] Pulling provider weekly orders (redemption denominators)...")
+    provider_weekly_orders = pull_provider_weekly_orders(dbx, cc)
 
     print(f"  [{cc}] Providers: {len(providers)}, Orders: {len(orders)}, Campaigns: {len(camp_spend)}")
 
     calc_data = build_calc_data(providers, orders, camp_spend)
     actuals_data = build_actuals_data(weekly_actuals)
     lookup_data = build_provider_lookup(providers, orders)
-    camp_history = build_camp_history(camp_hist_raw)
+    camp_history = build_camp_history(camp_hist_raw, provider_weekly_orders)
 
     calc_json = {
         'country': cc,
@@ -427,6 +462,14 @@ def main():
             summary[cc] = None
 
     index = generate_country_index()
+
+    # Rebuild empirical peer cost-rate benchmarks (cold-start / no-history path).
+    try:
+        import build_cost_benchmarks
+        print("\n  Rebuilding cost-rate benchmarks (cold-start path)...")
+        build_cost_benchmarks.main()
+    except Exception as e:
+        print(f"  WARN: could not rebuild cost benchmarks: {e}")
 
     print(f"\n{'='*50}")
     print(f"  SUMMARY")
