@@ -30,24 +30,34 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check Databricks token
+        id: token
         env:
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
           if [ -z "${DATABRICKS_TOKEN:-}" ]; then
-            echo "::error::Missing repository secret DATABRICKS_TOKEN."
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Missing repository secret DATABRICKS_TOKEN — Databricks steps will be skipped."
             echo "Add it under Settings → Secrets and variables → Actions (Databricks SQL warehouse PAT)."
-            exit 1
+            if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo "::error::Manual run requires DATABRICKS_TOKEN."
+              exit 1
+            fi
+          else
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Set up Python
+        if: steps.token.outputs.has_token == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: Install dependencies
+        if: steps.token.outputs.has_token == 'true'
         run: pip install databricks-sql-connector pandas
 
       - name: Refresh calculator and AM dashboard JSON (data/)
+        if: steps.token.outputs.has_token == 'true'
         env:
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
@@ -58,6 +68,7 @@ jobs:
           python3 scripts/refresh_data.py $ARGS
 
       - name: Refresh budget envelopes (data/*-budget.json)
+        if: steps.token.outputs.has_token == 'true'
         env:
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: |
@@ -69,6 +80,7 @@ jobs:
           python3 scripts/refresh_budget_data.py $ARGS
 
       - name: Refresh investment dashboard CSVs
+        if: steps.token.outputs.has_token == 'true'
         env:
           DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
         run: python3 scripts/refresh_investment_data.py

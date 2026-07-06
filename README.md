@@ -58,7 +58,13 @@ Malta’s Google Sheet is configured in `data/sheet-config.json` — everyone ge
 
 ## For admins — refreshing data
 
-Requires Bolt VPN + Databricks token (`DATABRICKS_TOKEN` or `~/.databricks_token`).
+Requires Bolt VPN + Databricks token. For **automatic Monday refreshes** via GitHub Actions, add a repo secret:
+
+1. GitHub → **https://github.com/syedkhan-prog/bolt-food-am-calculator/settings/secrets/actions**
+2. **New repository secret** → Name: `DATABRICKS_TOKEN` → Value: your Databricks SQL PAT
+3. Re-run **Actions → Refresh Data from Databricks → Run workflow**
+
+Without this secret, scheduled runs skip Databricks (dashboard still works with last committed data).
 
 ```bash
 python3 scripts/build_ca_targets.py          # when new CA month published
