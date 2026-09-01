@@ -39,7 +39,7 @@ def discover_countries(dbx):
     """Find all countries with active food campaign data in last 90 days."""
     df = dbx.query("""
         SELECT DISTINCT country
-        FROM ng_public_spark.etl_delivery_campaign_order_metrics
+        FROM main.ng_public.etl_delivery_campaign_order_metrics
         WHERE order_created_date >= DATE_SUB(CURRENT_DATE(), 90)
         ORDER BY country
     """)
@@ -52,7 +52,7 @@ def pull_providers(dbx, cc):
                account_manager_name, business_segment_v2, business_subsegment_v2,
                provider_status, provider_rating, is_bolt_plus_enrolled_provider,
                regular_commission_rate
-        FROM ng_delivery_spark.dim_provider_v2
+        FROM main.ng_delivery.dim_provider_v2
         WHERE country_code = '{cc}' AND delivery_vertical = 'food'
     """)
 
@@ -65,7 +65,7 @@ def pull_order_stats(dbx, cc, recent_weeks=RECENT_WEEKS_FOR_AVG):
                 DATE_TRUNC('WEEK', order_created_date) AS week_start,
                 COUNT(order_id) AS week_orders,
                 SUM(COALESCE(gmv_eur, 0)) AS week_gmv
-            FROM ng_public_spark.etl_delivery_order_monetary_metrics
+            FROM main.ng_public.etl_delivery_order_monetary_metrics
             WHERE country = '{cc}'
               AND order_created_date >= DATE_FORMAT(DATE_SUB(CURRENT_DATE(), 365), 'yyyy-MM-dd')
               AND is_bolt_market = false
@@ -109,7 +109,7 @@ def pull_campaign_spend(dbx, cc):
             provider_id,
             ROUND(SUM(CAST(bolt_spend AS DOUBLE)), 2) AS bolt_spend,
             ROUND(SUM(CAST(provider_spend AS DOUBLE)), 2) AS provider_spend
-        FROM ng_public_spark.etl_delivery_campaign_order_metrics
+        FROM main.ng_public.etl_delivery_campaign_order_metrics
         WHERE country = '{cc}'
           AND order_created_date >= DATE_SUB(CURRENT_DATE(), 365)
         GROUP BY provider_id
@@ -131,7 +131,7 @@ def pull_weekly_actuals(dbx, cc, weeks=8):
             ROUND(SUM(CAST(bolt_spend AS DOUBLE)), 2) AS bolt,
             ROUND(SUM(CAST(provider_spend AS DOUBLE)), 2) AS prov,
             ROUND(SUM(CAST(discount_value AS DOUBLE)), 2) AS total
-        FROM ng_public_spark.etl_delivery_campaign_order_metrics
+        FROM main.ng_public.etl_delivery_campaign_order_metrics
         WHERE country = '{cc}'
           AND order_created_date >= DATE_SUB(CURRENT_DATE(), {weeks * 7})
           AND order_created_date < DATE_TRUNC('WEEK', CURRENT_DATE())
@@ -164,7 +164,7 @@ def pull_camp_history(dbx, cc):
             ROUND(SUM(CAST(discount_value AS DOUBLE)), 2) AS total,
             COUNT(DISTINCT order_id) AS order_count,
             ROUND(AVG(CAST(discount_value AS DOUBLE)), 2) AS avg_disc
-        FROM ng_public_spark.etl_delivery_campaign_order_metrics
+        FROM main.ng_public.etl_delivery_campaign_order_metrics
         WHERE country = '{cc}'
           AND order_created_date >= DATE_SUB(CURRENT_DATE(), 365)
         GROUP BY provider_id, name, spend_objective,
@@ -186,7 +186,7 @@ def pull_provider_weekly_orders(dbx, cc):
             WEEKOFYEAR(order_created_date) AS iso_week,
             YEAR(order_created_date) AS yr,
             COUNT(DISTINCT order_id) AS total_orders
-        FROM ng_public_spark.etl_delivery_order_monetary_metrics
+        FROM main.ng_public.etl_delivery_order_monetary_metrics
         WHERE country = '{cc}'
           AND order_created_date >= DATE_SUB(CURRENT_DATE(), 365)
           AND is_bolt_market = false

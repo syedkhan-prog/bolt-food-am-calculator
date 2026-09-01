@@ -24,7 +24,7 @@ SELECT UPPER(country) AS code,
        COUNT(DISTINCT provider_id) AS providers,
        ROUND(SUM(CAST(bolt_spend AS DOUBLE)), 0) AS bolt_spend,
        ROUND(SUM(CAST(provider_spend AS DOUBLE)), 0) AS provider_spend
-FROM ng_public_spark.etl_delivery_campaign_order_metrics
+FROM main.ng_public.etl_delivery_campaign_order_metrics
 WHERE order_created_date >= DATE_SUB(CURRENT_DATE(), {weeks_back})
 GROUP BY 1
 ORDER BY providers DESC
@@ -47,10 +47,10 @@ SELECT
     COALESCE(p.vendor_name, p.provider_name, '') AS vendor_name,
     ROUND(SUM(CAST(c.bolt_spend AS DOUBLE)), 2) AS bolt_spend,
     ROUND(SUM(CAST(c.provider_spend AS DOUBLE)), 2) AS provider_spend
-FROM ng_public_spark.etl_delivery_campaign_order_metrics c
-JOIN ng_delivery_spark.dim_provider_v2 p
+FROM main.ng_public.etl_delivery_campaign_order_metrics c
+JOIN main.ng_delivery.dim_provider_v2 p
     ON c.provider_id = p.provider_id
-LEFT JOIN ng_delivery_spark.dim_delivery_city ct
+LEFT JOIN main.ng_delivery.dim_delivery_city ct
     ON c.city_id = ct.city_id
 WHERE c.country = LOWER('{country}')
   AND c.order_created_date >= DATE_SUB(CURRENT_DATE(), {weeks_back})

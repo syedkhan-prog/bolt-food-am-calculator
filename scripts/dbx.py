@@ -26,7 +26,9 @@ import os
 import time
 
 SERVER_HOSTNAME = "bolt-incentives.cloud.databricks.com"
-HTTP_PATH = "sql/protocolv1/o/2472566184436351/0221-081903-9ag4bh69"
+# Unity Catalog cluster "Shared Growth Analytics all purpose".
+# The old Glue cluster 0221-081903-9ag4bh69 rejects autostart and cannot read UC tables.
+HTTP_PATH = "sql/protocolv1/o/2472566184436351/0505-112942-d3yviznw"
 TOKEN_FILE = os.path.expanduser("~/.databricks_token")
 QUERY_RETRIES = 3
 QUERY_RETRY_DELAY_SEC = 5

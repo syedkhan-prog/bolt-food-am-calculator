@@ -49,7 +49,7 @@ def parse_month(month_str: str) -> tuple[date, date, int]:
 def pull_gmv_mtd(dbx: DBX, cc: str, month_start: date, as_of: date) -> float:
     df = dbx.query(f"""
         SELECT ROUND(SUM(COALESCE(gmv_eur, 0)), 2) AS gmv_mtd
-        FROM ng_public_spark.etl_delivery_order_monetary_metrics
+        FROM main.ng_public.etl_delivery_order_monetary_metrics
         WHERE country = '{cc}'
           AND order_created_date >= DATE('{month_start.isoformat()}')
           AND order_created_date <= DATE('{as_of.isoformat()}')
@@ -64,8 +64,8 @@ def pull_spend_mtd(dbx: DBX, cc: str, month_start: date, as_of: date) -> list[di
             COALESCE(cm.spend_objective, 'unknown') AS spend_objective,
             ROUND(SUM(COALESCE(cm.bolt_spend, 0)), 2) AS bolt_spend,
             ROUND(SUM(COALESCE(cm.provider_spend, 0)), 2) AS provider_spend
-        FROM ng_public_spark.etl_delivery_campaign_order_metrics cm
-        INNER JOIN ng_delivery_spark.dim_provider_v2 p
+        FROM main.ng_public.etl_delivery_campaign_order_metrics cm
+        INNER JOIN main.ng_delivery.dim_provider_v2 p
             ON cm.provider_id = p.provider_id
         WHERE cm.country = '{cc}'
           AND cm.order_created_date >= DATE('{month_start.isoformat()}')
